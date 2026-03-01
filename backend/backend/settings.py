@@ -8,17 +8,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------------------[ENVIRONMENT CONFIG]-------------------- #
 env = Env()
-
-Env.read_env(os.path.join(BASE_DIR.parent, ".env"))
+Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
-
 DEBUG = env.bool("DJANGO_DEBUG")
-
 ALLOWED_HOSTS = ["*"]
 
 # ---------------------[APPLICATIONS INSTALLED]-------------------- #
 INSTALLED_APPS = [
+    'jet',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -38,7 +36,9 @@ DJANGO_BACKEND_APPS = [
 # Project apps
 EXTRA_APPS = [
     "core",
-    "AdminPanal"
+    "AdminPanal",
+    "user",
+    "company",
 ]
 
 INSTALLED_APPS += DJANGO_BACKEND_APPS
@@ -59,10 +59,17 @@ MIDDLEWARE = [
 # ---------------------[REST FRAMEWORK CONFIG]-------------------- #
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny"
+        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.IsAdminUser",
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+        "rest_framework.permissions.DjangoModelPermissions",
+        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication"
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ],
 }
 
@@ -94,43 +101,28 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # ---------------------[DATABASE CONFIG]-------------------- #
 DATABASES = {
     "default": {
-        "ENGINE": env("DJANGO_DB_ENGINE", default="django.db.backends.sqlite3"),
-        "NAME": env("DJANGO_DB_NAME", default=os.path.join(BASE_DIR, "db.sqlite3")),
+        "ENGINE": env("DJANGO_DB_ENGINE"),  # django.db.backends.sqlite3 from .env
+        "NAME": BASE_DIR / env("DJANGO_DB_NAME"),  # db.sqlite3 from .env
     }
 }
 
 # ---------------------[PASSWORD VALIDATION]-------------------- #
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 # ---------------------[INTERNATIONALIZATION]-------------------- #
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
 # ---------------------[STATIC FILES]-------------------- #
 STATIC_URL = "/static/"
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
-
+STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ---------------------[MEDIA FILES - UPLOADS]-------------------- #

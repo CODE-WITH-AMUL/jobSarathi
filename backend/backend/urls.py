@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/website-settings/', PublicWebsiteSettingsView.as_view(), name='public-website-settings'),
     path('api/', include('core.urls')),
+    path('candidate/api/', include('user.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
