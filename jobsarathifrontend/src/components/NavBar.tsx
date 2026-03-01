@@ -1,67 +1,72 @@
-import { MenuIcon, XIcon } from 'lucide-react';
-import { PrimaryButton } from './Button';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+// ======================
+//  components/Navbar.tsx
+// ======================
 
-export default function Navbar() {
-    const [isOpen, setIsOpen] = useState(false);
+import React, { useState, useEffect } from 'react';
+import { fetchWebsiteSettings, type WebsiteSettings } from '../api/websiteSettings';
 
-    const navLinks = [
-        { name: 'Home', href: '/#' },
-        { name: 'Jobs', href: '/#pricing' },
-        { name: 'Companies', href: '/#features' },
-        { name: 'FAQ', href: '/#faq' },
-    ];
+const DEFAULT_NAME = 'Job Sarathi';
+const DEFAULT_TAGLINE = 'नेपालको जागिर साथी';
 
-    return (
-        <motion.nav className='fixed top-5 left-0 right-0 z-50 px-4'
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1 }}
-        >
-            <div className='max-w-6xl mx-auto flex items-center justify-between bg-black/50 backdrop-blur-md border border-white/4 rounded-2xl p-3'>
-                <a href='/#'>
-                    <img src='/logo.svg' alt="logo" className="h-8" />
-                </a>
+const Navbar: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [settings, setSettings] = useState<WebsiteSettings | null>(null);
 
-                <div className='hidden md:flex items-center gap-8 text-sm font-medium text-gray-300'>
-                    {navLinks.map((link) => (
-                        <a href={link.href} key={link.name} className="hover:text-white transition">
-                            {link.name}
-                        </a>
-                    ))}
-                </div>
+  useEffect(() => {
+    fetchWebsiteSettings()
+      .then(setSettings)
+      .catch(() => setSettings({ name: null, logo: null }));
+  }, []);
 
-                <div className='hidden md:flex items-center gap-3'>
-                    <button className='text-sm font-medium text-gray-300 hover:text-white transition max-sm:hidden'>
-                    </button>
-                    <PrimaryButton className='max-sm:text-xs hidden sm:inline-block'>Sign in</PrimaryButton>
-                </div>
+  const siteName = settings?.name ?? DEFAULT_NAME;
 
-                <button onClick={() => setIsOpen(!isOpen)} className='md:hidden'>
-                    <MenuIcon className='size-6' />
-                </button>
-            </div>
-            <div className={`flex flex-col items-center justify-center gap-6 text-lg font-medium fixed inset-0 bg-black/40 backdrop-blur-md z-50 transition-all duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
-                {navLinks.map((link) => (
-                    <a key={link.name} href={link.href} onClick={() => setIsOpen(false)}>
-                        {link.name}
-                    </a>
-                ))}
+  return (
+    <nav className="bg-white/95 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-x-3">
+          {settings?.logo ? (
+            <img src={settings.logo} alt={siteName} className="w-10 h-10 object-contain rounded-3xl" />
+          ) : (
+            <div className="w-10 h-10 bg-indigo-600 rounded-3xl flex items-center justify-center text-white font-bold text-3xl tracking-tighter">JS</div>
+          )}
+          <div>
+            <div className="font-bold text-3xl tracking-tighter text-slate-950">{siteName}</div>
+            <div className="text-[10px] -mt-1 text-slate-500 font-medium">{DEFAULT_TAGLINE}</div>
+          </div>
+        </div>
 
-                <button onClick={() => setIsOpen(false)} className='font-medium text-gray-300 hover:text-white transition'>
-                    Sign in
-                </button>
-                <PrimaryButton onClick={() => setIsOpen(false)}>Post a Job</PrimaryButton>
+        <div className="hidden md:flex items-center gap-x-10 text-sm font-medium text-slate-600">
+          <a href="#jobs" className="hover:text-indigo-700 transition-colors">Find Jobs</a>
+          <a href="#how" className="hover:text-indigo-700 transition-colors">How it Works</a>
+          <a href="#stories" className="hover:text-indigo-700 transition-colors">Success Stories</a>
+          <a href="#resources" className="hover:text-indigo-700 transition-colors">Resources</a>
+        </div>
 
-                <button
-                    onClick={() => setIsOpen(false)}
-                    className="rounded-md bg-white p-2 text-gray-800 ring-white active:ring-2"
-                >
-                    <XIcon />
-                </button>
-            </div>
-        </motion.nav>
-    );
+        <div className="hidden md:flex items-center gap-x-4">
+          <button onClick={() => alert('Login flow opens here')} className="px-7 py-3 text-sm font-semibold border border-slate-300 hover:border-slate-400 text-slate-700 rounded-3xl transition-all active:scale-95">Log in</button>
+          <button onClick={() => alert('Post a job flow')} className="px-7 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-3xl transition-all active:scale-95 shadow-md">Post a Job</button>
+        </div>
+
+        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden w-11 h-11 flex items-center justify-center text-slate-700">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6h12v12" : "M4 6h16M4 12h16M4 18h16"} />
+          </svg>
+        </button>
+      </div>
+
+      {isMenuOpen && (
+        <div className="md:hidden border-t bg-white px-6 py-8 space-y-6 text-lg">
+          <a href="#jobs" className="block py-2">Find Jobs</a>
+          <a href="#how" className="block py-2">How it Works</a>
+          <a href="#stories" className="block py-2">Success Stories</a>
+          <div className="pt-6 border-t flex flex-col gap-4">
+            <button className="py-4 border-2 border-slate-300 text-slate-700 rounded-3xl font-medium">Log in</button>
+            <button className="py-4 bg-indigo-600 text-white rounded-3xl font-semibold">Post a Job</button>
+          </div>
+        </div>
+      )}
+    </nav>
+  );
 };
+
+export default Navbar;
