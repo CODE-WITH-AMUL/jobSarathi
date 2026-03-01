@@ -1,132 +1,141 @@
+# ---------------------[IMPORTS]-------------------- #
 import os
-from environ import Env
 from pathlib import Path
+from environ import Env
 
-env = Env()
-
+# ---------------------[BASE DIRECTORY]-------------------- #
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# django-environ expects a file path or file-like object; pass a string path
-env.read_env(str(BASE_DIR.parent / ".env"))
+# ---------------------[ENVIRONMENT CONFIG]-------------------- #
+env = Env()
 
+Env.read_env(os.path.join(BASE_DIR.parent, ".env"))
 
+SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
 
+DEBUG = env.bool("DJANGO_DEBUG")
 
-SECRET_KEY = env('DAJNGO_SECRET_KEY', default='unsafe-secret-key')
+ALLOWED_HOSTS = ["*"]
 
-
-# Read DEBUG as a boolean, default to False
-DEBUG = env.bool('DAJNGO_DEBUG', default=False)
-
-ALLOWED_HOSTS = ['*']
-
-
-# Application definition
-
+# ---------------------[APPLICATIONS INSTALLED]-------------------- #
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    
-    
-    # This app path is for the apis to interact with the frontend
-    'corsheaders',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'rest_framework_simplejwt',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 ]
 
-'''
-This is an extra app where we store the list of the path
-'''
+# Backend/API apps
+DJANGO_BACKEND_APPS = [
+    "corsheaders",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "rest_framework_simplejwt",
+]
+
+# Project apps
 EXTRA_APPS = [
-    'core',
+    "core",
+    "AdminPanal"
 ]
 
+INSTALLED_APPS += DJANGO_BACKEND_APPS
 INSTALLED_APPS += EXTRA_APPS
 
+# ---------------------[MIDDLEWARE]-------------------- #
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# ---------------------[REST FRAMEWORK CONFIG]-------------------- #
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
-    'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',),
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny"
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication"
+    ],
 }
 
+# ---------------------[CORS SETTINGS]-------------------- #
 CORS_ALLOW_ALL_ORIGINS = True
 
-ROOT_URLCONF = 'backend.urls'
+# ---------------------[URL CONFIG]-------------------- #
+ROOT_URLCONF = "backend.urls"
 
+# ---------------------[TEMPLATES]-------------------- #
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'backend.wsgi.application'
+# ---------------------[WSGI]-------------------- #
+WSGI_APPLICATION = "backend.wsgi.application"
 
-
-
+# ---------------------[DATABASE CONFIG]-------------------- #
 DATABASES = {
-    'default': {
-        'ENGINE': env('DAJNGO_DB_ENGINE', default='django.db.backends.sqlite3'),
-        'NAME': env('DAJNGO_DB_NAME', default=str(BASE_DIR / 'db.sqlite3')),
+    "default": {
+        "ENGINE": env("DJANGO_DB_ENGINE", default="django.db.backends.sqlite3"),
+        "NAME": env("DJANGO_DB_NAME", default=os.path.join(BASE_DIR, "db.sqlite3")),
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
+# ---------------------[PASSWORD VALIDATION]-------------------- #
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
+# ---------------------[INTERNATIONALIZATION]-------------------- #
+LANGUAGE_CODE = "en-us"
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
 USE_TZ = True
 
+# ---------------------[STATIC FILES]-------------------- #
+STATIC_URL = "/static/"
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
-STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# ---------------------[MEDIA FILES - UPLOADS]-------------------- #
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# ---------------------[DEFAULT AUTO FIELD]-------------------- #
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
