@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, Bell, Briefcase, Info, Award, BookOpen, User } from 'lucide-react';
 // Assuming this is your API utility
 import { fetchWebsiteSettings, type WebsiteSettings } from '../api/websiteSettings';
+import { Link } from 'react-router-dom';
 
 const DEFAULT_NAME = 'Job Sarathi';
 const DEFAULT_TAGLINE = 'नेपालको जागिर साथी';
@@ -117,20 +118,20 @@ const Navbar: React.FC = () => {
                <span className="text-sm font-semibold">Profile</span>
              </button>
           ) : (
-            <button 
-              onClick={() => alert('Login flow opens here')} 
+            <a 
+              href="/login"   // <-- Updated URL
               className="text-sm font-semibold text-slate-700 hover:text-indigo-600 px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-md"
             >
               Log in
-            </button>
+            </a>
           )}
           
-          <button 
-            onClick={() => alert('Register flow')} 
+          <a 
+            href="/register"   // <-- Updated URL
             className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold rounded-full transition-all hover:shadow-lg hover:shadow-indigo-600/20 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-600"
           >
             Register
-          </button>
+          </a>
         </div>
 
         {/* Mobile Menu Toggle Button */}
@@ -173,13 +174,19 @@ const Navbar: React.FC = () => {
           })}
           
           <div className="mt-4 pt-6 border-t border-slate-100 flex flex-col gap-3 px-2">
-            <button className="flex items-center justify-center gap-2 py-3.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-semibold transition-colors">
+            <a 
+              href="/login"   // <-- Updated URL
+              className="flex items-center justify-center gap-2 py-3.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-semibold transition-colors"
+            >
               Log in
-            </button>
-            <button className="flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold transition-colors shadow-md">
+            </a>
+            <a 
+              href="/register"   // <-- Updated URL
+              className="flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold transition-colors shadow-md"
+            >
               <Briefcase size={18} />
               Register
-            </button>
+            </a>
           </div>
         </div>
       </div>
