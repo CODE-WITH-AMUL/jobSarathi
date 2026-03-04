@@ -1,0 +1,154 @@
+{% load i18n %}
+
+<style>
+  .jp-cards-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .jp-card {
+    flex: 1 1 200px;
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  }
+  .jp-card--candidates {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+  }
+  .jp-card--jobs {
+    background: linear-gradient(135deg, #059669, #10b981);
+  }
+  .jp-card--applications {
+    background: linear-gradient(135deg, #f97316, #f59e0b);
+  }
+  .jp-card__label {
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.9;
+    margin-bottom: 6px;
+  }
+  .jp-card__value {
+    font-size: 28px;
+    font-weight: 700;
+  }
+  .jp-charts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .jp-chart-box {
+    flex: 1 1 320px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 20px 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  }
+  .jp-chart-box h4 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+</style>
+
+<div class="jp-dashboard">
+  <div class="jp-cards-row">
+    <div class="jp-card jp-card--candidates">
+      <div class="jp-card__label">{% trans "Total Candidates" %}</div>
+      <div class="jp-card__value">{{ module.total_candidates }}</div>
+    </div>
+    <div class="jp-card jp-card--jobs">
+      <div class="jp-card__label">{% trans "Total Jobs" %}</div>
+      <div class="jp-card__value">{{ module.total_jobs }}</div>
+    </div>
+    <div class="jp-card jp-card--applications">
+      <div class="jp-card__label">{% trans "Total Applications" %}</div>
+      <div class="jp-card__value">{{ module.total_applications }}</div>
+    </div>
+  </div>
+
+  <div class="jp-charts-row">
+    <div class="jp-chart-box">
+      <h4>{% trans "Applications per Job" %}</h4>
+      <canvas id="applicationsPerJobChart" height="180"></canvas>
+    </div>
+    <div class="jp-chart-box">
+      <h4>{% trans "Jobs by Status" %}</h4>
+      <canvas id="jobsByStatusChart" height="180"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    const applicationsPerJob = {{ module.applications_per_job|safe }};
+    const jobsByStatus = {{ module.jobs_by_status|safe }};
+
+    const jobLabels = applicationsPerJob.map(item => item["job__job_title"]);
+    const jobCounts = applicationsPerJob.map(item => item["total"]);
+
+    const statusLabels = jobsByStatus.map(item => item["job_status"]);
+    const statusCounts = jobsByStatus.map(item => item["total"]);
+
+    const randomColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16);
+
+    const barColors = jobLabels.map(() => randomColor());
+    const pieColors = statusLabels.map(() => randomColor());
+
+    const barCtx = document.getElementById("applicationsPerJobChart");
+    if (barCtx) {
+      new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels: jobLabels,
+          datasets: [{
+            label: "Applications",
+            data: jobCounts,
+            backgroundColor: barColors,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+          },
+          scales: {
+            x: {
+              ticks: { autoSkip: false, maxRotation: 40, minRotation: 0 },
+            },
+            y: {
+              beginAtZero: true,
+            }
+          }
+        }
+      });
+    }
+
+    const pieCtx = document.getElementById("jobsByStatusChart");
+    if (pieCtx) {
+      new Chart(pieCtx, {
+        type: "doughnut",
+        data: {
+          labels: statusLabels,
+          datasets: [{
+            data: statusCounts,
+            backgroundColor: pieColors,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "bottom" },
+          },
+          cutout: "60%",
+        }
+      });
+    }
+  })();
+</script>
+

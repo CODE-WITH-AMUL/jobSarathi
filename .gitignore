@@ -1,4 +1,4 @@
-
+# ------------------ Node.js ------------------ #
 logs
 *.log
 npm-debug.log*
@@ -7,33 +7,33 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-
+# ------------------ IDEs & OS ------------------ #
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.DS_Store
 
-
-# django part to add the .gitignore file
+# ------------------ Python / Django ------------------ #
 *.pyc
 __pycache__/
 db.sqlite3
 .env
 .React.env
+django*.gitignore
 
-.django.gitignore
-
-
+# ------------------ Virtual Environments ------------------ #
 venv/
-*venv
-venv
+venve/
+env/
+__pycache__/
+*.pyc

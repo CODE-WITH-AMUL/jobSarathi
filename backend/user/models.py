@@ -1,5 +1,6 @@
 #-----------------[IMPORTS]---------------------#
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from company.models import Job
 #-----------------[CHOICES]---------------------#
 GENDER_CHOICES = [
@@ -86,17 +87,23 @@ class CandidateProfile(TimeStampedModel):
     social_media = models.ForeignKey(SocialMedia, on_delete=models.SET_NULL, blank=True, null=True, related_name="candidates")
 
     class Meta:
-        verbose_name = "CandidateProfile"
-        verbose_name_plural = "CandidateProfiles"
+        verbose_name = "Candidate profile"
+        verbose_name_plural = "Candidate profiles"
         indexes = [
             models.Index(fields=['email']),
             models.Index(fields=['phone']),
             models.Index(fields=['first_name']),
             models.Index(fields=['last_name']),
+            models.Index(fields=['city']),
+            models.Index(fields=['gender']),
         ]
 
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return self.full_name
 #-----------------[RESUME MODEL]------------------#
 class Resume(TimeStampedModel):
     candidate = models.ForeignKey(
@@ -141,12 +148,16 @@ class Education(TimeStampedModel):
 class Skill(TimeStampedModel):
     candidate = models.ForeignKey(CandidateProfile, on_delete=models.CASCADE, related_name='skills')
     skill = models.CharField(max_length=225)
+    slug = models.SlugField(max_length=120, unique=True, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     is_current = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     class Meta:
+        verbose_name = _('Skill')
+        verbose_name_plural = _('Skills')
+        ordering = ['skill']
         indexes = [models.Index(fields=['skill'])]
 
     def __str__(self):
@@ -171,11 +182,53 @@ class Experience(TimeStampedModel):
     def __str__(self):
         return f"{self.position} at {self.company}"
 
+#-----------------[JOB APPLICATION STATUS CHOICES]------------------#
+APPLICATION_STATUS_CHOICES = [
+    ('applied', _('Applied')),
+    ('under_review', _('Under review')),
+    ('shortlisted', _('Shortlisted')),
+    ('rejected', _('Rejected')),
+    ('selected', _('Selected')),
+    ('withdrawn', _('Withdrawn')),
+]
+
+
 #-----------------[JOB APPLICATION MODEL]------------------#
 class JobApplication(TimeStampedModel):
-    candidate = models.ForeignKey(CandidateProfile, on_delete=models.CASCADE, related_name='job_applications')
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
+    candidate = models.ForeignKey(
+        CandidateProfile,
+        on_delete=models.CASCADE,
+        related_name='job_applications'
+    )
+    job = models.ForeignKey(
+        Job,
+        on_delete=models.CASCADE,
+        related_name='applications'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=APPLICATION_STATUS_CHOICES,
+        default='applied',
+        db_index=True,
+    )
+    source = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="e.g., LinkedIn, Referral",
+    )
     cover_letter = models.TextField(blank=True, null=True)
 
+    class Meta:
+        verbose_name = "Job application"
+        verbose_name_plural = "Job applications"
+        ordering = ['-created_at']
+        unique_together = [('job', 'candidate')]
+        indexes = [
+            models.Index(fields=['job', 'candidate']),
+            models.Index(fields=['status']),
+            models.Index(fields=['created_at']),
+        ]
+
     def __str__(self):
-        return f"Application by {self.candidate} for Job {self.job.id}"
+        return f"{self.candidate} -> {self.job} ({self.status})"

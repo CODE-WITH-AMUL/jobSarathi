@@ -1,11 +1,42 @@
 // ======================
 //  components/Testimonials.tsx
 // ======================
+import avatar2Pac from "../assets/2pac.png";
+import avatarTyler from "../assets/person1.png";
+import avatarKaneya from "../assets/keney.png";
+
 const Testimonials: React.FC = () => {
   const testimonials = [
-    { id: 1, name: "Anita Thapa", role: "Frontend Engineer", company: "Pathao", quote: "Job Sarathi made my job search effortless. Landed my role at Pathao within 12 days!", avatar: "/assets/testimonial-1.jpg", rating: 5 },
-    { id: 2, name: "Rohan Sharma", role: "Marketing Head", company: "SastoDeal", quote: "The best platform for professionals in Nepal. Transparent, fast, and trustworthy.", avatar: "/assets/testimonial-2.jpg", rating: 5 },
-    { id: 3, name: "Sushma Karki", role: "Branch Manager", company: "NIC Asia Bank", quote: "Found my dream leadership role. The salary transparency is a game changer.", avatar: "/assets/testimonial-3.jpg", rating: 4 },
+    {
+      id: 1,
+      name: "2Pac",
+      role: "American rapper and actor",
+      company: "Death Row",
+      quote:
+        "Job Sarathi made my job search effortless. Landed my role at Pathao within 12 days!",
+      avatar: avatar2Pac,
+      rating: 5,
+    },
+    {
+      id: 2,
+      name: "Tyler",
+      role: "Marketing Head",
+      company: "SastoDeal",
+      quote:
+        "The best platform for professionals in Nepal. Transparent, fast, and trustworthy.",
+      avatar: avatarTyler,
+      rating: 5,
+    },
+    {
+      id: 3,
+      name: "Kaneya West",
+      role: "American rapper",
+      company: "Rapper",
+      quote:
+        "Found my dream leadership role. The salary transparency is a game changer.",
+      avatar: avatarKaneya,
+      rating: 4,
+    },
   ];
 
   return (

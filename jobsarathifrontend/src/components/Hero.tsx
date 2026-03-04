@@ -1,6 +1,7 @@
 // ======================
 //  components/Hero.tsx
 // ======================
+import heroImg from "../assets/hero.png";
 const Hero: React.FC = () => {
   return (
     <section className="relative bg-gradient-to-br from-slate-950 to-indigo-950 text-white pt-24 pb-28 overflow-hidden">
@@ -36,7 +37,7 @@ const Hero: React.FC = () => {
 
         <div className="relative hidden lg:block">
           <div className="absolute -inset-12 bg-gradient-to-br from-indigo-400/20 to-transparent rounded-[4rem] -rotate-6" />
-          <img src="/assets/hero-image.png" alt="Happy Nepali professional celebrating new job offer" className="relative rounded-3xl shadow-2xl border border-white/30 animate-float" />
+          <img src={heroImg} alt="Happy Nepali professional celebrating new job offer" className="relative rounded-3xl shadow-2xl border border-white/30 animate-float" />
           <div className="absolute -top-6 -right-6 bg-white text-slate-900 px-6 py-4 rounded-3xl shadow-xl flex items-center gap-4">
             <div className="text-4xl">🎉</div>
             <div><div className="font-semibold">Hired in 14 days</div><div className="text-xs text-slate-500">Average time on Job Sarathi</div></div>

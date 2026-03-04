@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 from environ import Env
+from django.contrib import admin
 
 # ---------------------[BASE DIRECTORY]-------------------- #
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,6 +18,7 @@ ALLOWED_HOSTS = ["*"]
 # ---------------------[APPLICATIONS INSTALLED]-------------------- #
 INSTALLED_APPS = [
     'jet',
+    'jet.dashboard',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -131,3 +133,13 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # ---------------------[DEFAULT AUTO FIELD]-------------------- #
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------------------[DJANGO JET SETTINGS]-------------------- #
+JET_DEFAULT_THEME = "light-blue"  # modern, clean theme
+JET_SIDE_MENU_COMPACT = True      # slim, collapsible sidebar
+JET_INDEX_DASHBOARD = "backend.dashboard.CustomIndexDashboard"
+
+# ---------------------[ADMIN BRANDING]-------------------- #
+admin.site.site_header = "JobSarathi Admin"
+admin.site.site_title = "JobSarathi Admin"
+admin.site.index_title = "Job Portal Dashboard"
