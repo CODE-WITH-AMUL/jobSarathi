@@ -2,23 +2,23 @@
 import os
 from pathlib import Path
 from environ import Env
-from django.contrib import admin
 
 # ---------------------[BASE DIRECTORY]-------------------- #
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent
 
 # ---------------------[ENVIRONMENT CONFIG]-------------------- #
 env = Env()
-Env.read_env(BASE_DIR / ".env")
+# .env is stored at the project root (one level above backend)
+Env.read_env(PROJECT_ROOT / ".env")
 
 SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
-DEBUG = env.bool("DJANGO_DEBUG")
+DEBUG = env.bool("DJANGO_DEBUG", default=True)
 ALLOWED_HOSTS = ["*"]
 
 # ---------------------[APPLICATIONS INSTALLED]-------------------- #
 INSTALLED_APPS = [
-    'jet',
-    'jet.dashboard',
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -103,8 +103,8 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # ---------------------[DATABASE CONFIG]-------------------- #
 DATABASES = {
     "default": {
-        "ENGINE": env("DJANGO_DB_ENGINE"),  # django.db.backends.sqlite3 from .env
-        "NAME": BASE_DIR / env("DJANGO_DB_NAME"),  # db.sqlite3 from .env
+        "ENGINE": env("DJANGO_DB_ENGINE"),  # e.g. django.db.backends.sqlite3
+        "NAME": PROJECT_ROOT / env("DJANGO_DB_NAME"),  # e.g. db.sqlite3 at project root
     }
 }
 
@@ -134,12 +134,104 @@ MEDIA_ROOT = BASE_DIR / "media"
 # ---------------------[DEFAULT AUTO FIELD]-------------------- #
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ---------------------[DJANGO JET SETTINGS]-------------------- #
-JET_DEFAULT_THEME = "light-blue"  # modern, clean theme
-JET_SIDE_MENU_COMPACT = True      # slim, collapsible sidebar
-JET_INDEX_DASHBOARD = "backend.dashboard.CustomIndexDashboard"
+# ---------------------[JAZZMIN ADMIN THEME]-------------------- #
 
-# ---------------------[ADMIN BRANDING]-------------------- #
-admin.site.site_header = "JobSarathi Admin"
-admin.site.site_title = "JobSarathi Admin"
-admin.site.index_title = "Job Portal Dashboard"
+JAZZMIN_SETTINGS = {
+    # Basic branding
+    "site_title": "Job Sarathi Admin",
+    "site_header": "Job Sarathi",
+    "site_brand": "Job Sarathi",
+    "welcome_sign": "Welcome to Job Sarathi Admin",
+
+    # Use default Django favicon / logo for now (you can point these to a logo later)
+    "site_logo": None,
+    "login_logo": None,
+    "login_logo_dark": None,
+    "site_icon": None,
+
+    # Search in real models only
+    "search_model": ["auth.User", "company.Job"],
+
+    # Top menu: keep it minimal and clean
+    "topmenu_links": [
+        {"name": "Dashboard", "url": "admin:index"},
+        {"name": "View site", "url": "/", "new_window": True},
+    ],
+
+    # Sidebar behaviour
+    "show_sidebar": True,
+    "navigation_expanded": True,
+
+    # Order apps you actually have
+    "order_with_respect_to": ["auth", "AdminPanal", "company", "user"],
+
+    # Icons for apps / models you really use
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.group": "fas fa-users",
+
+        "AdminPanal": "fas fa-cog",
+
+        "company": "fas fa-building",
+        "company.Job": "fas fa-briefcase",
+
+        "user": "fas fa-user-tie",
+        "user.CandidateProfile": "fas fa-id-badge",
+        "user.JobApplication": "fas fa-file-signature",
+        "user.Resume": "fas fa-file-alt",
+        "user.Education": "fas fa-graduation-cap",
+        "user.Experience": "fas fa-briefcase",
+        "user.Skill": "fas fa-star",
+    },
+
+    # Default icons
+    "default_icon_parents": "fas fa-chevron-right",
+    "default_icon_children": "fas fa-circle",
+
+    # Enable modal for related objects
+    "related_modal_active": True,
+
+    # Clean change form layout
+    "changeform_format": "horizontal_tabs",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": True,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-primary",
+    "accent": "accent-primary",
+    "navbar": "navbar-white navbar-light",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
+    "actions_sticky_top": True,
+}
+
+JAZZMIN_SETTINGS.update(
+    {
+        # Keep your custom CSS override for fine-tuning colors / spacing
+        "custom_css": "css/admin-custom.css",
+    }
+)

@@ -11,9 +11,6 @@ urlpatterns = [
     path('api/website-settings/', PublicWebsiteSettingsView.as_view(), name='public-website-settings'),
     path('api/', include('core.urls')),
     path('candidate/api/', include('user.urls')),
-    path('jet/', include('jet.urls', 'jet')),                       
-    path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),  
-
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

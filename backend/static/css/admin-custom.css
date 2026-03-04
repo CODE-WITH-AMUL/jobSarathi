@@ -1,0 +1,57 @@
+/* Fix for profile section */
+.user-panel {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 10px;
+}
+
+.user-panel .info a {
+    color: #fff !important;
+}
+
+/* Fix for sidebar nesting */
+.nav-treeview > .nav-item {
+    margin-left: 15px !important;
+}
+
+.nav-treeview .nav-link {
+    padding: 8px 15px !important;
+    font-size: 0.9rem !important;
+}
+
+/* Fix for Website Settings form */
+.module {
+    margin: 20px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-row {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.form-row label {
+    font-weight: 600;
+    min-width: 150px;
+    color: #333;
+}
+
+/* Fix file input styling */
+.file-upload {
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+/* Fix duplicate copyright */
+.footer {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-align: center;
+}
