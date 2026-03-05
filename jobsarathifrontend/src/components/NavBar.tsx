@@ -4,13 +4,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Bell, Briefcase, Info, Award, BookOpen, User } from 'lucide-react';
+import { Link } from 'react-router-dom'; // <-- Added Link
 // Assuming this is your API utility
 import { fetchWebsiteSettings, type WebsiteSettings } from '../api/websiteSettings';
 
 const DEFAULT_NAME = 'Job Sarathi';
 const DEFAULT_TAGLINE = 'नेपालको जागिर साथी';
 
-// 1. Extract navigation data to keep the render method clean and maintainable
+// Navigation links
 const NAV_LINKS = [
   { label: 'Find Jobs', href: '#jobs', icon: Briefcase },
   { label: 'How it Works', href: '#how', icon: Info },
@@ -21,12 +22,8 @@ const NAV_LINKS = [
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);
-  
-  // Optional: Track active section for highlighting
-  const [activePath, setActivePath] = useState('#jobs'); 
-  
-  // Optional: Mock authentication state to demonstrate the notification bell and profile
-  const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [activePath, setActivePath] = useState('#jobs');
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Example auth state
 
   useEffect(() => {
     fetchWebsiteSettings()
@@ -34,7 +31,7 @@ const Navbar: React.FC = () => {
       .catch(() => setSettings({ name: null, logo: null }));
   }, []);
 
-  // Prevent background scrolling when mobile menu is open
+  // Prevent background scroll when mobile menu is open
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -55,8 +52,8 @@ const Navbar: React.FC = () => {
         
         {/* Brand / Logo Section */}
         <div className="flex items-center gap-x-3 flex-shrink-0">
-          <a 
-            href="/" 
+          <Link 
+            to="/" 
             className="flex items-center gap-x-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-lg p-1"
             aria-label={`${siteName} Home`}
           >
@@ -68,7 +65,7 @@ const Navbar: React.FC = () => {
                 {DEFAULT_TAGLINE}
               </div>
             </div>
-          </a>
+          </Link>
         </div>
 
         {/* Desktop Navigation Links */}
@@ -82,11 +79,9 @@ const Navbar: React.FC = () => {
                 onClick={() => setActivePath(link.href)}
                 aria-current={isActive ? 'page' : undefined}
                 className={`relative font-medium text-sm transition-colors px-1 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-md
-                  ${isActive ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}
-                `}
+                  ${isActive ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}`}
               >
                 {link.label}
-                {/* Active Indicator Underline */}
                 {isActive && (
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full animate-in fade-in zoom-in duration-300" />
                 )}
@@ -98,7 +93,7 @@ const Navbar: React.FC = () => {
         {/* Desktop Actions & Notifications */}
         <div className="hidden md:flex items-center gap-x-5">
           
-          {/* Notifications Icon (Example of optional enhancement) */}
+          {/* Notifications Icon */}
           <button 
             className="relative p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
             aria-label="View notifications"
@@ -110,30 +105,33 @@ const Navbar: React.FC = () => {
           <div className="w-px h-6 bg-slate-200 hidden lg:block"></div>
 
           {isLoggedIn ? (
-             <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
+             <Link
+               to="/profile"
+               className="flex items-center gap-2 px-4 py-2 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+             >
                <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
                  <User size={14} />
                </div>
                <span className="text-sm font-semibold">Profile</span>
-             </button>
+             </Link>
           ) : (
-            <button 
-              onClick={() => alert('Login flow opens here')} 
+            <Link
+              to="/login"
               className="text-sm font-semibold text-slate-700 hover:text-indigo-600 px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-md"
             >
               Log in
-            </button>
+            </Link>
           )}
           
-          <button 
-            onClick={() => alert('Register flow')} 
+          <Link
+            to="/register"
             className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold rounded-full transition-all hover:shadow-lg hover:shadow-indigo-600/20 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-600"
           >
             Register
-          </button>
+          </Link>
         </div>
 
-        {/* Mobile Menu Toggle Button */}
+        {/* Mobile Menu Toggle */}
         <button 
           onClick={() => setIsMenuOpen(!isMenuOpen)} 
           className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
@@ -160,11 +158,10 @@ const Navbar: React.FC = () => {
                 href={link.href} 
                 onClick={() => {
                   setActivePath(link.href);
-                  setIsMenuOpen(false); // Auto-close on click
+                  setIsMenuOpen(false);
                 }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors
-                  ${isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50 hover:text-indigo-600'}
-                `}
+                  ${isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50 hover:text-indigo-600'}`}
               >
                 <link.icon size={18} className={isActive ? 'text-indigo-600' : 'text-slate-400'} />
                 {link.label}
@@ -173,13 +170,19 @@ const Navbar: React.FC = () => {
           })}
           
           <div className="mt-4 pt-6 border-t border-slate-100 flex flex-col gap-3 px-2">
-            <button className="flex items-center justify-center gap-2 py-3.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-semibold transition-colors">
+            <Link
+              to="/login"
+              className="flex items-center justify-center gap-2 py-3.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-semibold transition-colors"
+            >
               Log in
-            </button>
-            <button className="flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold transition-colors shadow-md">
+            </Link>
+            <Link
+              to="/register"
+              className="flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold transition-colors shadow-md"
+            >
               <Briefcase size={18} />
               Register
-            </button>
+            </Link>
           </div>
         </div>
       </div>
