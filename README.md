@@ -38,7 +38,7 @@ Key objectives:
 ```bash
 # Clone the repository
 git clone https://github.com/CODE-WITH-AMUL/jobSarathi.git
-cd jobporjobSarathital
+cd jobSarathi
 
 # Create and activate virtual environment
 python -m venv venv
