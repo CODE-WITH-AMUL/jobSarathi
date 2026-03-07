@@ -1,63 +1,60 @@
-# Job Sarathi 
-
-Job Sarathi is a modern job portal platform designed to connect job seekers and employers efficiently. The system provides a streamlined hiring experience by enabling companies to post job openings and candidates to search, apply, and manage their job applications through a user-friendly interface.
-
-The platform focuses on simplicity, performance, and scalability, making it suitable for startups, recruitment agencies, and enterprise hiring systems.
-
+# JobPortal - Professional Job Portal Web Application
 
 
 ## Overview
+**JobPortal** is a comprehensive web application designed to connect job seekers and employers efficiently.  
+Built for scalability and modern user experience, it allows seamless job posting, application, and management.
 
-Job Sarathi acts as a centralized recruitment platform where:
+Key objectives:
+- Provide an intuitive platform for job seekers to explore opportunities.
+- Enable employers to post jobs and manage applications efficiently.
+- Offer secure authentication and personalized dashboards for all users.
 
-- Employers can post and manage job listings
-- Job seekers can browse jobs and submit applications
-- Administrators can manage platform settings and users
-- The system ensures efficient job matching and tracking
+## Features
+- User Roles: **Job Seeker**, **Employer**, **Admin**
+- Job Posting & Management
+- Resume Upload 
+- Advanced Job Search & Filters
+- Real-time Notifications & Alerts
+- Dashboard Analytics for Employers
+- Secure Authentication & Role-based Access Control
 
-The goal of the platform is to simplify the recruitment workflow while providing a structured job marketplace.
+## Tech Stack
+- **Backend:** Django 6.0
+- **Frontend:** React / Tailwind CSS
+- **Database:** PostgreSQL (Production), SQLite (Development)
+- **APIs:** REST Framework (DRF)
+- **Authentication:** JWT & Django Auth
+- **Version Control:** Git
 
----
+## Installation
+### Prerequisites
+- Python 3.10+
+- Node.js & npm
+- PostgreSQL (optional, SQLite for quick setup)
+- Virtualenv (recommended)
 
-## Key Features
+### Steps
+```bash
+# Clone the repository
+git clone https://github.com/CODE-WITH-AMUL/jobSarathi.git
+cd jobporjobSarathital
 
-### For Job Seekers
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate   # Linux/Mac
+venv\Scripts\activate      # Windows
 
-- User registration and profile management
-- Browse and search job listings
-- Apply for jobs directly through the platform
-- Track submitted applications
-- Receive job recommendations
+# Install dependencies
+pip install -r requirements.txt
 
-### For Employers
 
-- Employer profile management
-- Post and manage job listings
-- View and filter job applicants
-- Manage recruitment workflow
 
-### For Administrators
+# Apply migrations
+python manage.py migrate
 
-- Platform configuration management
-- User and job moderation
-- Website settings control
-- Data monitoring and management
+# Create superuser (Admin)
+python manage.py createsuperuser
 
----
-
-## Technology Stack
-
-### Backend
-- Python
-- Django
-- Django REST Framework
-
-### Frontend
-- React / Vite
-- HTML5
-- CSS3
-- JavaScript
-
-### Database
-- SQLite (for development)
-
+# Run the development server
+python manage.py runserver
