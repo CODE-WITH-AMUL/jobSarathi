@@ -1,4 +1,6 @@
-#---------------------[IMPORT MODELS]-----------------#
+"""Company app domain models."""
+
+from django.conf import settings
 from django.db import models
 
 
@@ -28,7 +30,49 @@ class TimeStampedModel(models.Model):
 
 
 #--------------------------[JOB MODELS]-----------------------------#
+class CompanyProfile(TimeStampedModel):
+    """Profile managed by a company account."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="company_profile",
+    )
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    logo = models.ImageField(upload_to="company_logos/", blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Company profile"
+        verbose_name_plural = "Company profiles"
+        indexes = [
+            models.Index(fields=["name"]),
+            models.Index(fields=["location"]),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class Job(TimeStampedModel):
+    """Published job post."""
+
+    posted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="posted_jobs",
+        null=True,
+        blank=True,
+    )
+    company = models.ForeignKey(
+        CompanyProfile,
+        on_delete=models.SET_NULL,
+        related_name="jobs",
+        null=True,
+        blank=True,
+    )
     company_name = models.CharField(max_length=255)
     job_title = models.CharField(max_length=250)
     description = models.TextField()

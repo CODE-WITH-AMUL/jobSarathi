@@ -1,11 +1,23 @@
-#--------------------------[IMPORT MODEL]---------------------#
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.permissions import AllowAny
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.db import OperationalError
 from rest_framework import status, viewsets
-from .serializers import ProfileSerializer , UserRegisterSerializer
+from rest_framework.exceptions import APIException
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from company.models import CompanyProfile
+
 from .models import Profile
+from .serializers import (
+    EmailOrUsernameTokenObtainPairSerializer,
+    ProfileSerializer,
+    ProfileUpdateSerializer,
+    UserRegisterSerializer,
+)
+
+class EmailOrUsernameTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailOrUsernameTokenObtainPairSerializer
 
 
 class RegisterView(APIView):
@@ -14,17 +26,18 @@ class RegisterView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response(
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        role = "company" if CompanyProfile.objects.filter(user=user).exists() else "candidate"
+        return Response(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": role,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -32,9 +45,15 @@ class ProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Users can only see their own profile
-        return Profile.objects.filter(user=self.request.user)
+        try:
+            profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        except OperationalError as exc:
+            if "no such column: core_profile.avatar" in str(exc):
+                raise APIException("Database schema is outdated. Run: python manage.py migrate")
+            raise
+        return Profile.objects.filter(pk=profile.pk)
 
-    def perform_create(self, serializer):
-        # Ensure profile is linked to the logged-in user
-        serializer.save(user=self.request.user)
+    def get_serializer_class(self):
+        if self.action in ["update", "partial_update", "create"]:
+            return ProfileUpdateSerializer
+        return ProfileSerializer

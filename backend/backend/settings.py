@@ -1,7 +1,9 @@
 # ---------------------[IMPORTS]-------------------- #
 import os
 from pathlib import Path
+from datetime import timedelta
 from environ import Env
+# from .security import *
 
 # ---------------------[BASE DIRECTORY]-------------------- #
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,10 +13,16 @@ PROJECT_ROOT = BASE_DIR.parent
 env = Env()
 
 # Load .env from project root
-Env.read_env(PROJECT_ROOT / ".env")
+Env.read_env(str(PROJECT_ROOT / ".env"))
 
 SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
+# Prevent weak JWT signing keys in local misconfigured .env files.
+if len(SECRET_KEY) < 32:
+    if DEBUG:
+        SECRET_KEY = (SECRET_KEY + "-dev-unsafe-key-padding-please-change-me").ljust(32, "_")
+    else:
+        raise ValueError("SECRET_KEY must be at least 32 characters in production.")
 
 ALLOWED_HOSTS = env.list(
     "DJANGO_ALLOWED_HOSTS",
@@ -24,7 +32,7 @@ ALLOWED_HOSTS = env.list(
 # ---------------------[APPLICATIONS INSTALLED]-------------------- #
 INSTALLED_APPS = [
     "jazzmin",
-
+    "django_cleanup",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -70,21 +78,55 @@ MIDDLEWARE = [
 ]
 
 
+# ---------------------[CSRF SETTINGS]-------------------- #
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+
 # ---------------------[REST FRAMEWORK CONFIG]-------------------- #
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
-    ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/day",
+        "user": "1000/day",
+    },
+}
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
 
 # ---------------------[CORS SETTINGS]-------------------- #
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
 
 # ---------------------[URL CONFIG]-------------------- #
@@ -117,20 +159,15 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 
 # ---------------------[DATABASE CONFIG]-------------------- #
+# -------------------------
+# DATABASE CONFIGURATION
+# -------------------------
 DATABASES = {
     "default": {
-        "ENGINE": env(
-            "DJANGO_DB_ENGINE",
-            default="django.db.backends.sqlite3"
-        ),
-
-        "NAME": PROJECT_ROOT / env(
-            "DJANGO_DB_NAME",
-            default="db.sqlite3"
-        ),
+        "ENGINE": env("DJANGO_DB_ENGINE", default="django.db.backends.sqlite3"),
+        "NAME": env("DJANGO_DB_NAME", default=str(BASE_DIR / "db.sqlite3")),
     }
 }
-
 
 # ---------------------[PASSWORD VALIDATION]-------------------- #
 AUTH_PASSWORD_VALIDATORS = [
@@ -181,23 +218,77 @@ MEDIA_ROOT = BASE_DIR / "media"
 # ---------------------[DEFAULT AUTO FIELD]-------------------- #
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+FILE_UPLOAD_PERMISSIONS = 0o644
 
+# Logging configuration
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "ignore_dev_https_noise": {
+            "()": "backend.logging_filters.IgnoreDevServerHTTPSNoise",
+        },
+    },
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "django_server_console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+            "filters": ["ignore_dev_https_noise"],
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "django.server": {
+            "handlers": ["django_server_console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "profiles": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
+}
 # ---------------------[SECURITY FOR DEPLOYMENT]-------------------- #
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.vercel.app",
-    "https://*.onrender.com",
-]
+# Extend CSRF_TRUSTED_ORIGINS for production
+# CSRF_TRUSTED_ORIGINS += [
+#     "https://*.vercel.app",
+#     "https://*.onrender.com",
+# ]
 
 
 # ---------------------[JAZZMIN ADMIN THEME]-------------------- #
+# ─────────────────────────────────────────────────────────────
+# JAZZMIN ADMIN THEME — Job Sarathi (Production-Ready)
+# ─────────────────────────────────────────────────────────────
 JAZZMIN_SETTINGS = {
     "site_title": "Job Sarathi Admin",
     "site_header": "Job Sarathi",
     "site_brand": "Job Sarathi",
 
-    "welcome_sign": "Welcome to Job Sarathi Admin",
+    "welcome_sign": "Welcome to the Job Sarathi Admin Panel",
 
     "site_logo": None,
     "login_logo": None,
@@ -206,12 +297,12 @@ JAZZMIN_SETTINGS = {
 
     "search_model": [
         "auth.User",
-        "company.Job"
+        "company.Job",
     ],
 
     "topmenu_links": [
         {"name": "Dashboard", "url": "admin:index"},
-        {"name": "View site", "url": "/", "new_window": True},
+        {"name": "View Site", "url": "/", "new_window": True},
     ],
 
     "show_sidebar": True,
@@ -225,82 +316,36 @@ JAZZMIN_SETTINGS = {
     ],
 
     "icons": {
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
-        "auth.group": "fas fa-users",
+        "auth":                    "fas fa-users-cog",
+        "auth.user":               "fas fa-user",
+        "auth.group":              "fas fa-users",
 
-        "AdminPanal": "fas fa-cog",
+        "AdminPanal":              "fas fa-cog",
 
-        "company": "fas fa-building",
-        "company.Job": "fas fa-briefcase",
+        "company":                 "fas fa-building",
+        "company.Job":             "fas fa-briefcase",
 
-        "user": "fas fa-user-tie",
-        "user.CandidateProfile": "fas fa-id-badge",
-        "user.JobApplication": "fas fa-file-signature",
-        "user.Resume": "fas fa-file-alt",
-        "user.Education": "fas fa-graduation-cap",
-        "user.Experience": "fas fa-briefcase",
-        "user.Skill": "fas fa-star",
+        "user":                    "fas fa-user-tie",
+        "user.CandidateProfile":   "fas fa-id-badge",
+        "user.JobApplication":     "fas fa-file-signature",
+        "user.Resume":             "fas fa-file-alt",
+        "user.Education":          "fas fa-graduation-cap",
+        "user.Experience":         "fas fa-briefcase",
+        "user.Skill":              "fas fa-star",
     },
 
-    "default_icon_parents": "fas fa-chevron-right",
+    "default_icon_parents":  "fas fa-chevron-right",
     "default_icon_children": "fas fa-circle",
 
     "related_modal_active": True,
 
     "changeform_format": "horizontal_tabs",
 
+    # Place this file at:  <your_app>/static/css/admin-custom.css
     "custom_css": "css/admin-custom.css",
 }
 
 
-# ---------------------[JAZZMIN UI TWEAKS]-------------------- #
-JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": True,
 
-    "body_small_text": False,
-    "brand_small_text": False,
 
-    "brand_colour": "navbar-primary",
-    "accent": "accent-primary",
 
-    "navbar": "navbar-white navbar-light",
-
-    "no_navbar_border": False,
-    "navbar_fixed": True,
-
-    "layout_boxed": False,
-
-    "footer_fixed": False,
-
-    "sidebar_fixed": True,
-
-    "sidebar": "sidebar-dark-primary",
-
-    "sidebar_nav_small_text": False,
-
-    "sidebar_disable_expand": False,
-
-    "sidebar_nav_child_indent": True,
-
-    "sidebar_nav_compact_style": False,
-
-    "sidebar_nav_legacy_style": False,
-
-    "sidebar_nav_flat_style": False,
-
-    "theme": "default",
-    "dark_mode_theme": None,
-
-    "button_classes": {
-        "primary": "btn-primary",
-        "secondary": "btn-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success",
-    },
-
-    "actions_sticky_top": True,
-}

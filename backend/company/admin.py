@@ -1,6 +1,14 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Job
+from .models import CompanyProfile, Job
+
+
+@admin.register(CompanyProfile)
+class CompanyProfileAdmin(admin.ModelAdmin):
+    list_display = ("name", "user", "website", "location", "created_at")
+    search_fields = ("name", "user__username", "user__email", "location")
+    list_filter = ("location", "created_at")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(Job)
@@ -37,6 +45,8 @@ class JobAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
+                "posted_by",
+                "company",
                 'company_name',
                 'job_title',
                 'description',

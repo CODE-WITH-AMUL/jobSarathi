@@ -1,6 +1,7 @@
 #-----------------[IMPORTS]---------------------#
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 from company.models import Job
 #-----------------[CHOICES]---------------------#
 GENDER_CHOICES = [
@@ -66,6 +67,13 @@ class SocialMedia(models.Model):
 
 #-----------------[CANDIDATE PROFILE MODEL]------------------#
 class CandidateProfile(TimeStampedModel):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='candidate_profile',
+        null=True,
+        blank=True,
+    )
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True, db_index=True)
@@ -218,6 +226,9 @@ class JobApplication(TimeStampedModel):
         help_text="e.g., LinkedIn, Referral",
     )
     cover_letter = models.TextField(blank=True, null=True)
+    resume_file = models.FileField(upload_to="application_resumes/", blank=True, null=True)
+    resume_match_score = models.PositiveSmallIntegerField(blank=True, null=True)
+    resume_analysis = models.TextField(blank=True, null=True)
 
     class Meta:
         verbose_name = "Job application"
@@ -232,3 +243,28 @@ class JobApplication(TimeStampedModel):
 
     def __str__(self):
         return f"{self.candidate} -> {self.job} ({self.status})"
+
+
+class SavedJob(TimeStampedModel):
+    candidate = models.ForeignKey(
+        CandidateProfile,
+        on_delete=models.CASCADE,
+        related_name="saved_jobs",
+    )
+    job = models.ForeignKey(
+        Job,
+        on_delete=models.CASCADE,
+        related_name="saved_by_candidates",
+    )
+
+    class Meta:
+        verbose_name = "Saved job"
+        verbose_name_plural = "Saved jobs"
+        unique_together = [("candidate", "job")]
+        indexes = [
+            models.Index(fields=["candidate", "job"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.candidate} saved {self.job}"
