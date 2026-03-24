@@ -1,11 +1,14 @@
 from django.db.models import Q
-from rest_framework import mixins, viewsets
-from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
+from rest_framework import mixins, viewsets, status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.permissions import IsCandidateUser
 from company.models import Job
+from company.services import JobSearchService
+from company.filters import JobSearchFilter
 
 from .models import CandidateProfile, Education, Experience, JobApplication, Resume, SavedJob, Skill
 from .serializers import (
@@ -18,44 +21,12 @@ from .serializers import (
     SavedJobSerializer,
     SkillSerializer,
 )
-
-
-class IsCandidateUser(BasePermission):
-    message = "Only candidate users can access this endpoint."
-
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and not hasattr(request.user, "company_profile"))
-
-
-def _default_candidate_payload(user):
-    first_name = user.first_name or user.username
-    last_name = user.last_name or ""
-    return {
-        "first_name": first_name,
-        "last_name": last_name,
-        "email": user.email or f"{user.username}@example.com",
-        "phone": f"AUTO-{user.id}",
-        "address": "Not provided",
-        "city": "Not provided",
-        "country": "Not provided",
-        "zip_code": "00000",
-        "pincode": "00000",
-        "dob": "1995-01-01",
-        "age": 30,
-        "gender": "Prefer not to say",
-    }
+from .services import CandidateService
 
 
 def get_or_create_candidate_profile(user):
-    profile = CandidateProfile.objects.filter(user=user).first()
-    if profile:
-        return profile
-    profile = CandidateProfile.objects.filter(email=user.email).first() if user.email else None
-    if profile:
-        profile.user = user
-        profile.save(update_fields=["user"])
-        return profile
-    return CandidateProfile.objects.create(user=user, **_default_candidate_payload(user))
+    """Wrapper for backward compatibility"""
+    return CandidateService.get_or_create_candidate_profile(user)
 
 
 class CandidateProfileViewSet(viewsets.ModelViewSet):
@@ -119,6 +90,7 @@ class ResumeViewSet(BaseCandidateOwnedViewSet):
 
 class JobCatalogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = JobListSerializer
+    pagination_class = None  # Use manual pagination in list()
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
@@ -126,22 +98,71 @@ class JobCatalogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewse
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        queryset = Job.objects.filter(job_status="Open")
-        location = self.request.query_params.get("location")
-        job_type = self.request.query_params.get("type")
-        q = self.request.query_params.get("q")
-
-        if location:
-            queryset = queryset.filter(
-                Q(location_city__icontains=location) | Q(location_country__icontains=location)
-            )
-        if job_type:
-            queryset = queryset.filter(job_type__iexact=job_type)
-        if q:
-            queryset = queryset.filter(
-                Q(job_title__icontains=q) | Q(company_name__icontains=q) | Q(description__icontains=q)
-            )
-        return queryset
+        """
+        Get jobs with search filters.
+        
+        Query Parameters:
+            - keyword/q: Search in job title, company, description, skills
+            - location: Filter by location (city, state, country)
+            - type: Filter by job type (Remote, Full Time, Part Time, Internship)
+            - experience_level: Filter by experience level (Entry Level, Mid Level, Senior, Executive, Any)
+            - salary_min: Minimum salary
+            - salary_max: Maximum salary
+            - company: Filter by company name
+            - days_posted: Filter by days posted (in days)
+            - sort_by: Sort option (newest, oldest, salary_high, salary_low, relevance)
+            - page: Page number (default: 1)
+            - page_size: Items per page (default: 10, max: 100)
+        """
+        filters = {
+            'keyword': self.request.query_params.get('keyword') or self.request.query_params.get('q'),
+            'location': self.request.query_params.get('location'),
+            'job_type': self.request.query_params.get('type'),
+            'salary_min': self.request.query_params.get('salary_min'),
+            'salary_max': self.request.query_params.get('salary_max'),
+            'company': self.request.query_params.get('company'),
+            'days_posted': self.request.query_params.get('days_posted'),
+            'experience_level': self.request.query_params.get('experience_level'),
+            'sort_by': self.request.query_params.get('sort_by', 'newest'),
+            'page': self.request.query_params.get('page', 1),
+            'page_size': self.request.query_params.get('page_size', 10),
+        }
+        
+        # Remove None values
+        filters = {k: v for k, v in filters.items() if v is not None}
+        
+        try:
+            result = JobSearchService.search_jobs(**filters)
+            # Store pagination info for list() method
+            self._pagination_info = {
+                'total_count': result.get('total_count'),
+                'total_pages': result.get('total_pages'),
+                'page': result.get('page'),
+                'page_size': result.get('page_size'),
+            }
+            return result.get('queryset')
+        except ValueError as e:
+            # Return empty queryset for invalid filters
+            return Job.objects.none()
+    
+    def list(self, request, *args, **kwargs):
+        """List jobs with enhanced response including pagination info."""
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        serializer = self.get_serializer(queryset, many=True)
+        
+        # Include pagination info in response
+        pagination_info = getattr(self, '_pagination_info', {})
+        
+        return Response({
+            'count': pagination_info.get('total_count', len(queryset)),
+            'next': None,  # Simplified pagination
+            'previous': None,
+            'page': pagination_info.get('page', 1),
+            'page_size': pagination_info.get('page_size', 10),
+            'total_pages': pagination_info.get('total_pages', 1),
+            'results': serializer.data
+        })
 
 
 class JobApplicationViewSet(viewsets.ModelViewSet):
@@ -150,12 +171,12 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
-        return JobApplication.objects.select_related("job", "candidate").filter(
-            candidate=get_or_create_candidate_profile(self.request.user)
-        )
+        candidate = get_or_create_candidate_profile(self.request.user)
+        return CandidateService.get_candidate_applications(candidate)
 
     def perform_create(self, serializer):
-        serializer.save(candidate=get_or_create_candidate_profile(self.request.user))
+        candidate = get_or_create_candidate_profile(self.request.user)
+        serializer.save(candidate=candidate)
 
 
 class SavedJobViewSet(
@@ -168,12 +189,12 @@ class SavedJobViewSet(
     permission_classes = [IsAuthenticated, IsCandidateUser]
 
     def get_queryset(self):
-        return SavedJob.objects.select_related("job").filter(
-            candidate=get_or_create_candidate_profile(self.request.user)
-        )
+        candidate = get_or_create_candidate_profile(self.request.user)
+        return CandidateService.get_saved_jobs(candidate)
 
     def perform_create(self, serializer):
-        serializer.save(candidate=get_or_create_candidate_profile(self.request.user))
+        candidate = get_or_create_candidate_profile(self.request.user)
+        serializer.save(candidate=candidate)
 
 
 class CandidateDashboardView(APIView):

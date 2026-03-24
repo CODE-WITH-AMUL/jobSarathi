@@ -15,19 +15,14 @@ env = Env()
 # Load .env from project root
 Env.read_env(str(PROJECT_ROOT / ".env"))
 
-SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
-DEBUG = env.bool("DJANGO_DEBUG", default=True)
+SECRET_KEY = env("SECRET_KEY")
+DEBUG = env.bool("DJANGO_DEBUG")
 # Prevent weak JWT signing keys in local misconfigured .env files.
 if len(SECRET_KEY) < 32:
     if DEBUG:
         SECRET_KEY = (SECRET_KEY + "-dev-unsafe-key-padding-please-change-me").ljust(32, "_")
     else:
         raise ValueError("SECRET_KEY must be at least 32 characters in production.")
-
-ALLOWED_HOSTS = env.list(
-    "DJANGO_ALLOWED_HOSTS",
-    default=["localhost", "127.0.0.1"]
-)
 
 # ---------------------[APPLICATIONS INSTALLED]-------------------- #
 INSTALLED_APPS = [
@@ -79,10 +74,7 @@ MIDDLEWARE = [
 
 
 # ---------------------[CSRF SETTINGS]-------------------- #
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+CSRF_TRUSTED_ORIGINS=env.list("CSRF_TRUSTED_ORIGINS_ADDRESS")
 
 
 # ---------------------[REST FRAMEWORK CONFIG]-------------------- #
@@ -164,8 +156,8 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # -------------------------
 DATABASES = {
     "default": {
-        "ENGINE": env("DJANGO_DB_ENGINE", default="django.db.backends.sqlite3"),
-        "NAME": env("DJANGO_DB_NAME", default=str(BASE_DIR / "db.sqlite3")),
+        "ENGINE": env("DJANGO_DB_ENGINE"),
+        "NAME": env("DJANGO_DB_NAME"),
     }
 }
 
@@ -341,7 +333,6 @@ JAZZMIN_SETTINGS = {
 
     "changeform_format": "horizontal_tabs",
 
-    # Place this file at:  <your_app>/static/css/admin-custom.css
     "custom_css": "css/admin-custom.css",
 }
 

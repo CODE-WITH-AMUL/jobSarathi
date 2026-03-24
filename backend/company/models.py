@@ -17,6 +17,14 @@ JOB_STATUS_CHOICES = [
     ('Closed', 'Closed'),
 ]
 
+EXPERIENCE_LEVEL_CHOICES = [
+    ('Entry Level', 'Entry Level'),
+    ('Mid Level', 'Mid Level'),
+    ('Senior', 'Senior'),
+    ('Executive', 'Executive'),
+    ('Any', 'Any Experience Level'),
+]
+
 
 #------------------------[TIME STAMP]------------------------#
 class TimeStampedModel(models.Model):
@@ -81,6 +89,12 @@ class Job(TimeStampedModel):
     location_country = models.CharField(max_length=255)
     job_type = models.CharField(max_length=50, choices=JOB_TYPE)
     job_status = models.CharField(max_length=50, choices=JOB_STATUS_CHOICES, default='Open')
+    experience_level = models.CharField(
+        max_length=50, 
+        choices=EXPERIENCE_LEVEL_CHOICES, 
+        default='Any',
+        db_index=True
+    )
     
     skills_required = models.CharField(max_length=250)
     salary_min = models.DecimalField(max_digits=10, decimal_places=2)
@@ -96,6 +110,11 @@ class Job(TimeStampedModel):
             models.Index(fields=['job_title']),
             models.Index(fields=['company_name']),
             models.Index(fields=['location_city']),
+            models.Index(fields=['job_type']),
+            models.Index(fields=['experience_level']),
+            models.Index(fields=['job_status']),
+            models.Index(fields=['-posting_date']),
+            models.Index(fields=['salary_min', 'salary_max']),
         ]
     
     def __str__(self):
