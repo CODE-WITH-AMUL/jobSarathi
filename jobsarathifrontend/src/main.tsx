@@ -4,8 +4,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 
 import Landing from './pages/landing';
-import Login from './account/candidate/login';
-import Register from './account/candidate/register';
+import ChooseAccountType from './account/choose/choose_account_type';
+import CandidateLogin from './account/candidate/login';
+import CandidateRegister from './account/candidate/register';
+import CompanyLogin from './account/company/login';
+import CompanyRegister from './account/company/register';
 import Profile from './components/candidate/Profile';
 
 const rootEl = document.getElementById('root');
@@ -18,9 +21,21 @@ createRoot(rootEl).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        {/* Provide safe no-op callbacks so these components render without required props */}
-        <Route path="/login" element={<Login onLogin={() => {}} onToggleForm={() => {}} />} />
-        <Route path="/register" element={<Register onRegister={() => {}} onToggleForm={() => {}} />} />
+        
+        {/* Account Selection and Auth Routes */}
+        <Route path="/account/choose" element={<ChooseAccountType />} />
+        
+        {/* Candidate Routes */}
+        <Route path="/account/candidate/login" element={<CandidateLogin onLogin={() => {}} onToggleForm={() => {}} />} />
+        <Route path="/account/candidate/register" element={<CandidateRegister onRegister={() => {}} onToggleForm={() => {}} />} />
+        
+        {/* Company Routes */}
+        <Route path="/account/company/login" element={<CompanyLogin />} />
+        <Route path="/account/company/register" element={<CompanyRegister />} />
+        
+        {/* Legacy routes for backward compatibility */}
+        <Route path="/login" element={<CandidateLogin onLogin={() => {}} onToggleForm={() => {}} />} />
+        <Route path="/register" element={<CandidateRegister onRegister={() => {}} onToggleForm={() => {}} />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>

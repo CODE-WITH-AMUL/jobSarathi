@@ -5,7 +5,6 @@ import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import type { LoginProps } from '../types/auth.types';
 import { loginUser } from '../../api/api';
-import Navbar from '../../components/NavBar';
 
 const Login: React.FC<LoginProps> = ({ onLogin = () => {}, onToggleForm = () => {} }) => {
   const navigate = useNavigate();

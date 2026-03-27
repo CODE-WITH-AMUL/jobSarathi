@@ -10,7 +10,7 @@ if (!API_URL) {
 
 export const loginUser = async (data: LoginFormData) => {
   const base = API_URL || '';
-  const url = `${base}/login/`;
+  const url = `${base}/api/login/`;
   try {
     const response = await axios.post(url, {
       username: data.email, // Django default: username field
@@ -24,7 +24,7 @@ export const loginUser = async (data: LoginFormData) => {
 
 export const registerUser = async (data: RegisterFormData) => {
   const base = API_URL || '';
-  const url = `${base}/register/`;
+  const url = `${base}/api/register/`;
   try {
     const response = await axios.post(url, {
       username: data.username,
