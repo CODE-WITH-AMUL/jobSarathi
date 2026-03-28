@@ -49,12 +49,5 @@ venv\Scripts\activate      # Windows
 pip install -r requirements.txt
 
 
-
-# Apply migrations
-python manage.py migrate
-
-# Create superuser (Admin)
-python manage.py createsuperuser
-
 # Run the development server
 python manage.py runserver
