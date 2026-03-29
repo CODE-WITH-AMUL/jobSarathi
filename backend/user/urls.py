@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    CandidateProfileUpdateView,
     CandidateDashboardView,
     CandidateProfileViewSet,
     EducationViewSet,
@@ -26,5 +27,6 @@ router.register(r"saved-jobs", SavedJobViewSet, basename="saved-jobs")
 
 urlpatterns = [
     path("dashboard/", CandidateDashboardView.as_view(), name="candidate-dashboard"),
+    path("profile/update/", CandidateProfileUpdateView.as_view(), name="candidate-profile-update"),
     path("", include(router.urls)),
 ]

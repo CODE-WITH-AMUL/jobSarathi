@@ -14,6 +14,74 @@ class CandidateProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "user", "created_at", "updated_at"]
 
 
+class CandidateDashboardProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+    skills = serializers.SerializerMethodField()
+    experience = serializers.SerializerMethodField()
+    education = serializers.SerializerMethodField()
+    resume_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CandidateProfile
+        fields = [
+            "id",
+            "full_name",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "location",
+            "city",
+            "state",
+            "country",
+            "address",
+            "resume",
+            "resume_url",
+            "skills",
+            "experience",
+            "education",
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "resume_url",
+        ]
+
+    def get_full_name(self, obj):
+        return obj.full_name
+
+    def get_location(self, obj):
+        parts = [obj.city, obj.state, obj.country]
+        cleaned = [part.strip() for part in parts if part and str(part).strip()]
+        return ", ".join(cleaned)
+
+    def get_skills(self, obj):
+        return list(obj.skills.values_list("skill", flat=True))
+
+    def get_experience(self, obj):
+        latest = obj.experiences.order_by("-updated_at", "-created_at").first()
+        if latest and latest.description:
+            return latest.description
+        return obj.description or ""
+
+    def get_education(self, obj):
+        latest = obj.educations.order_by("-updated_at", "-created_at").first()
+        if latest and latest.description:
+            return latest.description
+        if latest and latest.institution:
+            return latest.institution
+        return obj.taglines or ""
+
+    def get_resume_url(self, obj):
+        if not obj.resume:
+            return None
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.resume.url)
+        return obj.resume.url
+
+
 class EducationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Education
@@ -135,7 +203,12 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         attrs = super().validate(attrs)
         if self.instance is None:
             candidate = attrs.get("candidate")
+            job = attrs.get("job")
             uploaded_resume = attrs.get("resume_file")
+
+            if candidate and job and JobApplication.objects.filter(candidate=candidate, job=job).exists():
+                raise serializers.ValidationError({"job": "You have already applied to this job."})
+
             if not uploaded_resume and candidate and not candidate.resume:
                 raise serializers.ValidationError({"resume_file": "Resume is required to apply."})
         return attrs

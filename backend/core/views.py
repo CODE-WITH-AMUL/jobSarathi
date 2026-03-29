@@ -60,130 +60,18 @@ class LoginRoleSelectionView(APIView):
 
 class CandidateLoginView(TokenObtainPairView):
     """
-    Class-based view for candidate login.
     POST /api/auth/candidate/login/
-    
-    Only allows users with 'candidate' role to login.
-    Rejects company users with 403 Forbidden.
-    Provides comprehensive error messages for debugging.
     """
     serializer_class = CandidateTokenObtainPairSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        """
-        Candidate login endpoint with enhanced error handling.
-        Accepts: username/email, password
-        Returns: access_token, refresh_token, role (always 'candidate')
-        """
-        try:
-            # Validate input fields
-            username_or_email = request.data.get('username') or request.data.get('email')
-            password = request.data.get('password')
-            
-            if not username_or_email:
-                return Response(
-                    {"detail": "Username or email is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            if not password:
-                return Response(
-                    {"detail": "Password is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            return super().post(request, *args, **kwargs)
-        except ValidationError as e:
-            error_detail = str(e.detail) if hasattr(e, 'detail') else str(e)
-            
-            if "This user account is registered as" in error_detail:
-                return Response(
-                    {"detail": error_detail, "error_code": "WRONG_ROLE"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
-            return Response(
-                {"detail": error_detail},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except Exception as e:
-            error_str = str(e)
-            if "This user account is registered as" in error_str:
-                return Response(
-                    {"detail": error_str, "error_code": "WRONG_ROLE"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            if "No active account found" in error_str or "Invalid credentials" in error_str.lower():
-                return Response(
-                    {"detail": "Invalid username/email or password", "error_code": "INVALID_CREDENTIALS"},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-            
-            raise
-
-
 class CompanyLoginView(TokenObtainPairView):
     """
-    Class-based view for company/employer login.
     POST /api/auth/company/login/
-    
-    Only allows users with 'company' role to login.
-    Rejects candidate users with 403 Forbidden.
-    Provides comprehensive error messages for debugging.
     """
     serializer_class = CompanyTokenObtainPairSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        """
-        Company login endpoint with enhanced error handling.
-        Accepts: username/email, password
-        Returns: access_token, refresh_token, role (always 'company')
-        """
-        try:
-            # Validate input fields
-            username_or_email = request.data.get('username') or request.data.get('email')
-            password = request.data.get('password')
-            
-            if not username_or_email:
-                return Response(
-                    {"detail": "Username or email is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            if not password:
-                return Response(
-                    {"detail": "Password is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            return super().post(request, *args, **kwargs)
-        except ValidationError as e:
-            error_detail = str(e.detail) if hasattr(e, 'detail') else str(e)
-            
-            if "This user account is registered as" in error_detail:
-                return Response(
-                    {"detail": error_detail, "error_code": "WRONG_ROLE"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
-            return Response(
-                {"detail": error_detail},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except Exception as e:
-            error_str = str(e)
-            if "This user account is registered as" in error_str:
-                return Response(
-                    {"detail": error_str, "error_code": "WRONG_ROLE"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            if "No active account found" in error_str or "Invalid credentials" in error_str.lower():
-                return Response(
-                    {"detail": "Invalid username/email or password", "error_code": "INVALID_CREDENTIALS"},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-            
-            raise
 
 
 # ============================================================================

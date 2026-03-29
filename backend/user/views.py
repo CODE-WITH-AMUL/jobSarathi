@@ -1,7 +1,7 @@
 from django.db.models import Q
 from rest_framework import mixins, viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,6 +12,7 @@ from company.filters import JobSearchFilter
 
 from .models import CandidateProfile, Education, Experience, JobApplication, Resume, SavedJob, Skill
 from .serializers import (
+    CandidateDashboardProfileSerializer,
     CandidateProfileSerializer,
     EducationSerializer,
     ExperienceSerializer,
@@ -141,7 +142,7 @@ class JobCatalogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewse
                 'page_size': result.get('page_size'),
             }
             return result.get('queryset')
-        except ValueError as e:
+        except ValueError:
             # Return empty queryset for invalid filters
             return Job.objects.none()
     
@@ -195,6 +196,193 @@ class SavedJobViewSet(
     def perform_create(self, serializer):
         candidate = get_or_create_candidate_profile(self.request.user)
         serializer.save(candidate=candidate)
+
+
+class CandidateProfileUpdateView(APIView):
+    """
+    Alias endpoint for candidate profile update.
+    PUT/PATCH /api/candidate/profile/update/
+    """
+
+    permission_classes = [IsAuthenticated, IsCandidateUser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request):
+        candidate = get_or_create_candidate_profile(request.user)
+        serializer = CandidateDashboardProfileSerializer(candidate, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        return self._update(request)
+
+    def patch(self, request):
+        return self._update(request)
+
+    def _update(self, request):
+        candidate = get_or_create_candidate_profile(request.user)
+        data = self._normalize_profile_payload(request)
+
+        resume_error = self._validate_resume_file(request)
+        if resume_error is not None:
+            return resume_error
+
+        serializer = CandidateProfileSerializer(candidate, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+
+        self._sync_skills(candidate, request.data)
+        self._sync_experience(candidate, request.data.get("experience"))
+        self._sync_education(candidate, request.data.get("education"))
+
+        candidate.refresh_from_db()
+        response_serializer = CandidateDashboardProfileSerializer(candidate, context={"request": request})
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    def _normalize_profile_payload(self, request):
+        data = request.data.copy()
+        data.pop("email", None)
+
+        full_name = request.data.get("full_name")
+        if full_name is not None:
+            data.pop("full_name", None)
+            normalized = str(full_name).strip()
+            if normalized:
+                parts = normalized.split()
+                data["first_name"] = parts[0]
+                data["last_name"] = " ".join(parts[1:]) if len(parts) > 1 else ""
+
+        location = request.data.get("location")
+        if location is not None:
+            data.pop("location", None)
+            parts = [part.strip() for part in str(location).split(",") if part and part.strip()]
+            if len(parts) >= 1:
+                data["city"] = parts[0]
+            if len(parts) == 2:
+                data["country"] = parts[1]
+            if len(parts) >= 3:
+                data["state"] = ", ".join(parts[1:-1])
+                data["country"] = parts[-1]
+
+        return data
+
+    def _validate_resume_file(self, request):
+        resume_file = request.FILES.get("resume")
+        if resume_file and not str(resume_file.name).lower().endswith(".pdf"):
+            return Response(
+                {"resume": ["Only PDF resumes are allowed."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
+
+    def _extract_skill_values(self, request_data):
+        skills_provided = False
+        skill_values = []
+
+        raw_skills = request_data.get("skills")
+        if raw_skills is not None:
+            skills_provided = True
+            if isinstance(raw_skills, str):
+                skill_values = [s.strip() for s in raw_skills.split(",") if s and s.strip()]
+            elif isinstance(raw_skills, (list, tuple)):
+                skill_values = [str(s).strip() for s in raw_skills if str(s).strip()]
+
+        if hasattr(request_data, "getlist") and "skills" in request_data:
+            listed = [s.strip() for s in request_data.getlist("skills") if s and s.strip()]
+            skills_provided = True
+            if listed:
+                skill_values = listed
+
+        return skills_provided, skill_values
+
+    def _sync_skills(self, candidate, request_data):
+        skills_provided, skill_values = self._extract_skill_values(request_data)
+        if not skills_provided:
+            return
+
+        Skill.objects.filter(candidate=candidate).delete()
+        if skill_values:
+            Skill.objects.bulk_create(
+                [Skill(candidate=candidate, skill=skill_name) for skill_name in skill_values]
+            )
+
+    def _sync_experience(self, candidate, experience_summary):
+        if experience_summary is None:
+            return
+
+        summary = str(experience_summary).strip()
+        if not summary:
+            return
+
+        existing = candidate.experiences.order_by("-updated_at", "-created_at").first()
+        if existing:
+            existing.company = existing.company or "Summary"
+            existing.position = existing.position or "Experience"
+            existing.description = summary
+            existing.save(update_fields=["company", "position", "description", "updated_at"])
+            return
+
+        Experience.objects.create(
+            candidate=candidate,
+            company="Summary",
+            position="Experience",
+            description=summary,
+        )
+
+    def _sync_education(self, candidate, education_summary):
+        if education_summary is None:
+            return
+
+        summary = str(education_summary).strip()
+        if not summary:
+            return
+
+        existing = candidate.educations.order_by("-updated_at", "-created_at").first()
+        if existing:
+            existing.degree = existing.degree or "Other"
+            existing.institution = existing.institution or "Summary"
+            existing.description = summary
+            existing.save(update_fields=["degree", "institution", "description", "updated_at"])
+            return
+
+        Education.objects.create(
+            candidate=candidate,
+            degree="Other",
+            institution="Summary",
+            description=summary,
+        )
+
+
+class CandidateJobApplyView(APIView):
+    """
+    Alias endpoint for candidate apply action.
+    POST /api/applications/apply/
+    """
+
+    permission_classes = [IsAuthenticated, IsCandidateUser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def post(self, request):
+        candidate = get_or_create_candidate_profile(request.user)
+        payload = request.data.copy()
+
+        payload.pop("candidate_id", None)
+
+        job_id = request.data.get("job_id") or request.data.get("job")
+        if not job_id:
+            return Response({"job_id": ["job_id is required."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        payload["job"] = job_id
+        if "job_id" in payload:
+            payload.pop("job_id")
+
+        resume_file = request.FILES.get("resume")
+        if resume_file is not None and "resume_file" not in payload:
+            payload["resume_file"] = resume_file
+
+        serializer = JobApplicationSerializer(data=payload, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(candidate=candidate)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CandidateDashboardView(APIView):

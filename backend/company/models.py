@@ -25,6 +25,19 @@ EXPERIENCE_LEVEL_CHOICES = [
     ('Any', 'Any Experience Level'),
 ]
 
+INDUSTRY_TYPE_CHOICES = [
+    ('Technology', 'Technology'),
+    ('Finance', 'Finance'),
+    ('Healthcare', 'Healthcare'),
+    ('Education', 'Education'),
+    ('Retail', 'Retail'),
+    ('Manufacturing', 'Manufacturing'),
+    ('Hospitality', 'Hospitality'),
+    ('Media', 'Media'),
+    ('Government', 'Government'),
+    ('Other', 'Other'),
+]
+
 
 #------------------------[TIME STAMP]------------------------#
 class TimeStampedModel(models.Model):
@@ -50,6 +63,13 @@ class CompanyProfile(TimeStampedModel):
     description = models.TextField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
+    industry_type = models.CharField(
+        max_length=100,
+        choices=INDUSTRY_TYPE_CHOICES,
+        blank=True,
+        null=True,
+        db_index=True,
+    )
     logo = models.ImageField(upload_to="company_logos/", blank=True, null=True)
 
     class Meta:

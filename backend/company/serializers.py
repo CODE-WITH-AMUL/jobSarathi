@@ -16,6 +16,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
             "description",
             "website",
             "location",
+            "industry_type",
             "logo",
             "user_email",
             "created_at",
@@ -25,6 +26,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(read_only=True)
     applications_count = serializers.IntegerField(read_only=True)
     application_count = serializers.IntegerField(source="applications_count", read_only=True)
     status = serializers.SerializerMethodField()
@@ -44,6 +46,7 @@ class JobSerializer(serializers.ModelSerializer):
             "location_country",
             "job_type",
             "job_status",
+            "experience_level",
             "skills_required",
             "salary_min",
             "salary_max",
@@ -69,6 +72,26 @@ class JobSerializer(serializers.ModelSerializer):
             "status",
             "view_count",
         ]
+
+    def to_internal_value(self, data):
+        if isinstance(data, dict) and isinstance(data.get("skills_required"), list):
+            mutable_data = data.copy()
+            mutable_data["skills_required"] = ", ".join(
+                [str(skill).strip() for skill in data.get("skills_required", []) if str(skill).strip()]
+            )
+            data = mutable_data
+        return super().to_internal_value(data)
+
+    def validate(self, attrs):
+        salary_min = attrs.get("salary_min", getattr(self.instance, "salary_min", None))
+        salary_max = attrs.get("salary_max", getattr(self.instance, "salary_max", None))
+
+        if salary_min is not None and salary_max is not None and salary_min > salary_max:
+            raise serializers.ValidationError(
+                {"salary_max": "Maximum salary must be greater than or equal to minimum salary."}
+            )
+
+        return attrs
 
     def get_status(self, obj):
         return "active" if obj.job_status == "Open" else "closed"

@@ -276,67 +276,113 @@ LOGGING = {
 # JAZZMIN ADMIN THEME — Job Sarathi (Production-Ready)
 # ─────────────────────────────────────────────────────────────
 JAZZMIN_SETTINGS = {
+    # ============================================================
+    # TITLE & BRANDING - Modern, Clean, Professional
+    # ============================================================
     "site_title": "Job Sarathi Admin",
     "site_header": "Job Sarathi",
     "site_brand": "Job Sarathi",
-
-    "welcome_sign": "Welcome to the Job Sarathi Admin Panel",
-
-    "site_logo": None,
-    "login_logo": None,
+    
+    # Welcome text with a touch of personality
+    "welcome_sign": "Welcome to Job Sarathi — Manage your ecosystem with ease",
+    
+    # Optional: Add custom logo paths if available (use high-quality PNG/SVG)
+    "site_logo": None,          # e.g., "images/logo_light.png"
+    "login_logo": None,         # e.g., "images/logo_dark.png"
     "login_logo_dark": None,
-    "site_icon": None,
-
+    "site_icon": None,          # favicon
+    
+    # ============================================================
+    # SEARCH & NAVIGATION - Quick Access to Key Models
+    # ============================================================
     "search_model": [
         "auth.User",
         "company.Job",
+        "user.CandidateProfile",
+        "user.JobApplication",
     ],
-
+    
     "topmenu_links": [
-        {"name": "Dashboard", "url": "admin:index"},
+        {"name": "Dashboard", "url": "admin:index", "permanent": True},
+        {"name": "Analytics", "url": "admin:index", "permanent": False},  # Placeholder
         {"name": "View Site", "url": "/", "new_window": True},
+        {"name": "Support", "url": "/support", "new_window": True},        # Optional
     ],
-
+    
+    # ============================================================
+    # LAYOUT & SIDEBAR - Streamlined & Expansive
+    # ============================================================
     "show_sidebar": True,
-    "navigation_expanded": True,
-
+    "navigation_expanded": True,          # Keep main sections expanded for productivity
+    "hide_apps": [],                      # No apps hidden — full visibility
+    "hide_models": [],                    # No models hidden
     "order_with_respect_to": [
         "auth",
-        "AdminPanal",
-        "company",
-        "user",
+        "user",                           # Core user profiles first
+        "company",                        # Then company and jobs
+        "AdminPanal",                     # Admin utilities
     ],
-
+    
+    # ============================================================
+    # ICONS - Consistent, Modern, Semantic Icon Set
+    # ============================================================
     "icons": {
-        "auth":                    "fas fa-users-cog",
-        "auth.user":               "fas fa-user",
+        # Authentication & Users
+        "auth":                    "fas fa-shield-alt",
+        "auth.user":               "fas fa-user-circle",
         "auth.group":              "fas fa-users",
-
-        "AdminPanal":              "fas fa-cog",
-
+        
+        # Admin utilities
+        "AdminPanal":              "fas fa-sliders-h",
+        
+        # Company & Jobs
         "company":                 "fas fa-building",
         "company.Job":             "fas fa-briefcase",
-
+        
+        # User profile & applications
         "user":                    "fas fa-user-tie",
-        "user.CandidateProfile":   "fas fa-id-badge",
-        "user.JobApplication":     "fas fa-file-signature",
-        "user.Resume":             "fas fa-file-alt",
-        "user.Education":          "fas fa-graduation-cap",
-        "user.Experience":         "fas fa-briefcase",
-        "user.Skill":              "fas fa-star",
+        "user.CandidateProfile":   "fas fa-id-card",
+        "user.JobApplication":     "fas fa-paper-plane",
+        "user.Resume":             "fas fa-file-pdf",
+        "user.Education":          "fas fa-university",
+        "user.Experience":         "fas fa-chart-line",
+        "user.Skill":              "fas fa-code-branch",
     },
-
-    "default_icon_parents":  "fas fa-chevron-right",
-    "default_icon_children": "fas fa-circle",
-
-    "related_modal_active": True,
-
+    
+    "default_icon_parents":  "fas fa-folder-open",
+    "default_icon_children": "fas fa-file",
+    
+    # ============================================================
+    # UI ENHANCEMENTS - Smooth, Modal, Tabs & More
+    # ============================================================
+    "related_modal_active": True,                # Modals for related fields (cleaner UX)
+    "custom_css": None,                          # Optional path to custom CSS
+    "custom_js": None,                           # Optional custom JS
+    
+    # Form layout: horizontal tabs for cleaner edit forms
     "changeform_format": "horizontal_tabs",
-
-    "custom_css": "css/admin-custom.css",
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",              # Override for user form if needed
+        "user.CandidateProfile": "vertical_tabs",
+    },
+    
+    # ============================================================
+    # ADVANCED PRODUCTIVITY TOGGLES
+    # ============================================================
+    "show_ui_builder": False,                    # Keep off unless developing
+    
+    # ============================================================
+    # COLORS (Optional: can be further customized via custom CSS)
+    # ============================================================
+    # These are general Jazzmin defaults; you can override them
+    # with a custom CSS file for deeper theming.
+    "theme": "flatly",                           # 'flatly', 'litera', 'cosmo', etc.
+    "dark_mode_theme": "darkly",                 # Optional dark mode
+    
+    # ============================================================
+    # ADDITIONAL TWEAKS FOR POLISH
+    # ============================================================
+    "show_ui_builder": False,
+    "use_google_fonts": True,
+    "language_chooser": False,                   # Set to True if multi-language
 }
-
-
-
-
-
