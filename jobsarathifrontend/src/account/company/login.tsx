@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, Building2, LogIn, ArrowLeft } from 'lucide-rea
 import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../../components/NavBar';
 import api from '../../api/apiClient';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface LoginFormData {
   email: string;
@@ -13,6 +14,7 @@ interface LoginFormData {
 
 const CompanyLogin: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState<LoginFormData>({
@@ -73,14 +75,26 @@ const CompanyLogin: React.FC = () => {
       // Save tokens
       localStorage.setItem('access_token', response.data.access);
       localStorage.setItem('refresh_token', response.data.refresh);
+      localStorage.setItem('accessToken', response.data.access);
+      localStorage.setItem('refreshToken', response.data.refresh);
+      localStorage.setItem('authToken', response.data.access);
+      localStorage.setItem('userType', 'company');
       localStorage.setItem('userRole', response.data.role || 'company');
+
+      // Update in-memory auth context so protected routes work immediately.
+      login({
+        id: typeof response.data?.user?.id === 'number' ? response.data.user.id : 1,
+        email: formData.email,
+        account_type: 'company',
+        company_name: response.data?.company_name,
+      });
       
       if (formData.rememberMe) {
         localStorage.setItem('rememberEmail', formData.email);
       }
       
       // Redirect to company dashboard
-      navigate('/company/dashboard');
+      navigate('/company/dashboard', { replace: true });
     } catch (error: any) {
       console.error('Company Login Error:', error);
       const errorMsg = error.response?.data?.detail || 

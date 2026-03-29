@@ -5,12 +5,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Menu, X, Bell, Briefcase, FileText, Heart, 
-  MessageSquare, UserCircle, Settings, LogOut, ChevronDown 
+  MessageSquare, ChevronDown 
 } from 'lucide-react';
-import { fetchWebsiteSettings, type WebsiteSettings } from '../api/websiteSettings';
+import { fetchWebsiteSettings, type WebsiteSettings } from '../../api/websiteSettings';
 
 const DEFAULT_NAME = 'Job Sarathi';
-const DEFAULT_TAGLINE = 'नेपालको जागिर साथी';
 
 // Candidate-specific navigation links
 const CANDIDATE_NAV_LINKS = [

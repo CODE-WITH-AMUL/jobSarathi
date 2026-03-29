@@ -4,8 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Bell, Briefcase, Info, Award, BookOpen, User } from 'lucide-react';
-import { Link } from 'react-router-dom'; // <-- Added Link
-// Assuming this is your API utility
+import { Link } from 'react-router-dom';
 import { fetchWebsiteSettings, type WebsiteSettings } from '../api/websiteSettings';
 
 const DEFAULT_NAME = 'Job Sarathi';
@@ -19,11 +18,16 @@ const NAV_LINKS = [
   { label: 'Resources', href: '#resources', icon: BookOpen },
 ];
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  onLoginClick?: () => void;
+  onRegisterClick?: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);
   const [activePath, setActivePath] = useState('#jobs');
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Example auth state
+  const [isLoggedIn] = useState(false);
 
   useEffect(() => {
     fetchWebsiteSettings()
@@ -43,6 +47,16 @@ const Navbar: React.FC = () => {
 
   const siteName = settings?.name ?? DEFAULT_NAME;
 
+  const handleLoginClick = () => {
+    setIsMenuOpen(false);
+    onLoginClick?.();
+  };
+
+  const handleRegisterClick = () => {
+    setIsMenuOpen(false);
+    onRegisterClick?.();
+  };
+
   return (
     <nav 
       className="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50 transition-all duration-300 shadow-sm"
@@ -61,7 +75,7 @@ const Navbar: React.FC = () => {
               <div className="font-extrabold text-2xl tracking-tight text-slate-900 leading-none">
                 {siteName}
               </div>
-              <div className="text-[11px] text-slate-500 font-medium tracking-wide uppercase mt-1">
+              <div className="text-[15px] text-slate-500 font-medium tracking-wide uppercase mt-1">
                 {DEFAULT_TAGLINE}
               </div>
             </div>
@@ -115,20 +129,40 @@ const Navbar: React.FC = () => {
                <span className="text-sm font-semibold">Profile</span>
              </Link>
           ) : (
-            <Link
-              to="/login"
-              className="text-sm font-semibold text-slate-700 hover:text-indigo-600 px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-md"
-            >
-              Log in
-            </Link>
+            onLoginClick ? (
+              <button
+                type="button"
+                onClick={handleLoginClick}
+                className="text-sm font-semibold text-slate-700 hover:text-indigo-600 px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-md"
+              >
+                Log in
+              </button>
+            ) : (
+              <Link
+                to="/account/choose?mode=login"
+                className="text-sm font-semibold text-slate-700 hover:text-indigo-600 px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-md"
+              >
+                Log in
+              </Link>
+            )
           )}
           
-          <Link
-            to="/register"
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold rounded-full transition-all hover:shadow-lg hover:shadow-indigo-600/20 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-600"
-          >
-            Register
-          </Link>
+          {onRegisterClick ? (
+            <button
+              type="button"
+              onClick={handleRegisterClick}
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold rounded-full transition-all hover:shadow-lg hover:shadow-indigo-600/20 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-600"
+            >
+              Register
+            </button>
+          ) : (
+            <Link
+              to="/account/choose?mode=register"
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold rounded-full transition-all hover:shadow-lg hover:shadow-indigo-600/20 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-600"
+            >
+              Register
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -170,19 +204,41 @@ const Navbar: React.FC = () => {
           })}
           
           <div className="mt-4 pt-6 border-t border-slate-100 flex flex-col gap-3 px-2">
-            <Link
-              to="/login"
-              className="flex items-center justify-center gap-2 py-3.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-semibold transition-colors"
-            >
-              Log in
-            </Link>
-            <Link
-              to="/register"
-              className="flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold transition-colors shadow-md"
-            >
-              <Briefcase size={18} />
-              Register
-            </Link>
+            {onLoginClick ? (
+              <button
+                type="button"
+                onClick={handleLoginClick}
+                className="flex items-center justify-center gap-2 py-3.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-semibold transition-colors"
+              >
+                Log in
+              </button>
+            ) : (
+              <Link
+                to="/account/choose?mode=login"
+                className="flex items-center justify-center gap-2 py-3.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-semibold transition-colors"
+              >
+                Log in
+              </Link>
+            )}
+
+            {onRegisterClick ? (
+              <button
+                type="button"
+                onClick={handleRegisterClick}
+                className="flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold transition-colors shadow-md"
+              >
+                <Briefcase size={18} />
+                Register
+              </button>
+            ) : (
+              <Link
+                to="/account/choose?mode=register"
+                className="flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold transition-colors shadow-md"
+              >
+                <Briefcase size={18} />
+                Register
+              </Link>
+            )}
           </div>
         </div>
       </div>

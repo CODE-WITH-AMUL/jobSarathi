@@ -2,11 +2,38 @@
 // components/Login.tsx
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { LoginProps } from '../types/auth.types';
 import { loginUser } from '../../api/api';
 
-const Login: React.FC<LoginProps> = ({ onLogin = () => {}, onToggleForm = () => {} }) => {
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (!error || typeof error !== 'object') {
+    return fallback;
+  }
+
+  const errorData = error as Record<string, unknown>;
+
+  if (typeof errorData.detail === 'string') {
+    return errorData.detail;
+  }
+
+  if (typeof errorData.message === 'string') {
+    return errorData.message;
+  }
+
+  for (const value of Object.values(errorData)) {
+    if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
+      return value[0];
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+  }
+
+  return fallback;
+};
+
+const Login: React.FC<LoginProps> = ({ onLogin = () => {} }) => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -63,18 +90,21 @@ const Login: React.FC<LoginProps> = ({ onLogin = () => {}, onToggleForm = () => 
       const data = await loginUser(formData);
       console.log('Login successful:', data);
       
-      // Save tokens to localStorage
+      // Save tokens and role using a shared key format used across the app.
+      localStorage.setItem('access_token', data.access);
+      localStorage.setItem('refresh_token', data.refresh);
       localStorage.setItem('accessToken', data.access);
       localStorage.setItem('refreshToken', data.refresh);
+      localStorage.setItem('authToken', data.access);
+      localStorage.setItem('userType', 'candidate');
+      localStorage.setItem('userRole', data.role || 'candidate');
       
       // Call onLogin callback
       onLogin(formData);
-    } catch (error: any) {
+      navigate('/candidate/dashboard');
+    } catch (error: unknown) {
       console.error('Login Error:', error);
-      setApiError(
-        error.response?.data?.message || 
-        'Invalid email or password. Please try again.'
-      );
+      setApiError(getErrorMessage(error, 'Invalid email or password. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -249,7 +279,7 @@ const Login: React.FC<LoginProps> = ({ onLogin = () => {}, onToggleForm = () => 
           <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-600">
             Don't have an account?{' '}
             <Link
-              to="/register"
+              to="/account/candidate/register"
               className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200 hover:underline focus:outline-none"
             >
               Sign up now

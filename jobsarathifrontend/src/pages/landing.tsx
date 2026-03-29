@@ -7,6 +7,8 @@ import HowItWorks from '../components/HowItWorks';
 import Testimonials from '../components/Testimonials';
 import NewsletterCTA from '../components/NewsletterCTA';
 import Footer from '../components/Footer';
+import AccountTypeSelector from '../components/AccountTypeSelector';
+import { useNavigate } from 'react-router-dom';
 
 interface Job {
   id: number;
@@ -24,6 +26,11 @@ const LandingPage: React.FC = () => {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [newsletterEmail, setNewsletterEmail] = useState('');
+
+  // Authentication modal states
+  const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const navigate = useNavigate();
 
   const featuredJobs: Job[] = [
     { id: 1, title: "Senior Frontend Developer", company: "F1Soft International", location: "Kathmandu", salary: "NPR 1,50,000 – 2,20,000", type: "Full-time", experience: "4–7 years" },
@@ -52,10 +59,31 @@ const LandingPage: React.FC = () => {
     }
   };
 
+  // Authentication handlers
+  const handleLogin = () => {
+    setAuthMode('login');
+    setShowAccountTypeModal(true);
+  };
+
+  const handleRegister = () => {
+    setAuthMode('register');
+    setShowAccountTypeModal(true);
+  };
+
+  const handleAccountTypeSelect = (type: 'company' | 'candidate') => {
+    setShowAccountTypeModal(false);
+    navigate(`/account/${type}/${authMode}`);
+  };
+
+  const handleCloseModals = () => {
+    setShowAccountTypeModal(false);
+  };
+
   return (
     <div className="min-h-screen bg-white font-sans overflow-x-hidden">
-      <Navbar />
+      <Navbar onLoginClick={handleLogin} onRegisterClick={handleRegister} />
       <Hero />
+
       <JobSearchBar 
         keyword={keyword} 
         setKeyword={setKeyword} 
@@ -71,6 +99,13 @@ const LandingPage: React.FC = () => {
         onSubmit={handleNewsletterSubmit} 
       />
       <Footer />
+
+      {/* Authentication Modals */}
+      <AccountTypeSelector
+        isOpen={showAccountTypeModal}
+        onClose={handleCloseModals}
+        onSelectType={handleAccountTypeSelect}
+      />
 
       {/* Apply Modal */}
       {showApplyModal && selectedJob && (
@@ -108,13 +143,6 @@ const LandingPage: React.FC = () => {
         </div>
       )}
 
-      <style jsx global>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-25px); }
-        }
-        .animate-float { animation: float 4.5s ease-in-out infinite; }
-      `}</style>
     </div>
   );
 };

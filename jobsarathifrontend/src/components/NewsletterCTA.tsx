@@ -1,7 +1,7 @@
 // ======================
 // components/NewsletterCTA.tsx
 // ======================
-import React, { useState } from 'react';
+import React from 'react';
 
 interface NewsletterCTAProps {
   newsletterEmail: string;
@@ -14,8 +14,6 @@ const NewsletterCTA: React.FC<NewsletterCTAProps> = ({
   setNewsletterEmail, 
   onSubmit 
 }) => {
-  const [isFocused, setIsFocused] = useState(false);
-
   return (
     <section className="relative bg-gradient-to-b from-gray-50 to-white overflow-hidden">
       {/* Subtle Background Pattern */}
@@ -54,8 +52,6 @@ const NewsletterCTA: React.FC<NewsletterCTAProps> = ({
                   type="email"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
                   placeholder="Enter your email"
                   className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:text-gray-400"
                   required

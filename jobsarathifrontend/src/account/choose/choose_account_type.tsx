@@ -1,7 +1,7 @@
 
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Briefcase, Users, ArrowRight, CheckCircle } from 'lucide-react';
 import Navbar from '../../components/NavBar';
 
@@ -15,8 +15,10 @@ interface AccountOption {
 
 const ChooseAccountType: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedRole, setSelectedRole] = useState<'candidate' | 'company' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const authMode = searchParams.get('mode') === 'login' ? 'login' : 'register';
 
   const accountOptions: AccountOption[] = [
     {
@@ -53,12 +55,8 @@ const ChooseAccountType: React.FC = () => {
       // Store selected role in localStorage for context
       localStorage.setItem('selectedAccountRole', role);
       
-      // Redirect to appropriate registration page
-      if (role === 'candidate') {
-        navigate('/account/candidate/register');
-      } else {
-        navigate('/account/company/register');
-      }
+      // Redirect to selected role's login/register page
+      navigate(`/account/${role}/${authMode}`);
     } catch (error) {
       console.error('Error selecting account type:', error);
       setIsLoading(false);
@@ -164,12 +162,12 @@ const ChooseAccountType: React.FC = () => {
           {/* Login Link */}
           <div className="text-center mt-12">
             <p className="text-gray-600">
-              Already have an account?{' '}
+              {authMode === 'login' ? 'Need an account? ' : 'Already have an account? '}
               <button
-                onClick={() => navigate('/account/candidate/login')}
+                onClick={() => navigate(`/account/choose?mode=${authMode === 'login' ? 'register' : 'login'}`)}
                 className="text-indigo-600 hover:text-indigo-700 font-semibold underline"
               >
-                Sign in here
+                {authMode === 'login' ? 'Register here' : 'Sign in here'}
               </button>
             </p>
           </div>
