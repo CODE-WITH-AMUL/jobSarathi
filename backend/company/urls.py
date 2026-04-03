@@ -18,7 +18,6 @@ router.register(r"public-jobs", PublicJobViewSet, basename="public-jobs")
 router.register(r"applications", CompanyApplicationViewSet, basename="company-applications")
 
 urlpatterns = [
-    # Alias endpoints used by dashboard clients
     path("profile/update/", CompanyProfileUpdateView.as_view(), name="company-profile-update"),
     path("dashboard/stats/", CompanyDashboardStatsView.as_view(), name="company-dashboard-stats"),
     path("", include(router.urls)),

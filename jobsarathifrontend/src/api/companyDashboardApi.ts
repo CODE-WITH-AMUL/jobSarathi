@@ -91,8 +91,58 @@ export interface CompanyDashboardStats {
   application_stats: Record<string, number>;
 }
 
+export type CompanyApplicationStatus =
+  | 'applied'
+  | 'under_review'
+  | 'shortlisted'
+  | 'selected'
+  | 'rejected'
+  | 'withdrawn';
+
+export interface CompanyApplication {
+  id: number;
+  job: number;
+  job_title: string;
+  candidate: number;
+  candidate_name: string;
+  candidate_email: string;
+  email: string;
+  phone: string;
+  location: string | null;
+  status: CompanyApplicationStatus;
+  source: string | null;
+  cover_letter: string | null;
+  resume_url: string | null;
+  candidate_resume_url: string | null;
+  candidate_skills: string[];
+  candidate_headline: string | null;
+  candidate_summary: string | null;
+  applied_date: string;
+  resume_match_score: number | null;
+  resume_analysis: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompanyApplicationReviewPayload {
+  status?: 'under_review' | 'shortlisted' | 'selected' | 'rejected';
+  notes?: string;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null;
+};
+
+const normalizeArrayPayload = <T>(payload: unknown): T[] => {
+  if (Array.isArray(payload)) {
+    return payload as T[];
+  }
+
+  if (isRecord(payload) && Array.isArray(payload.results)) {
+    return payload.results as T[];
+  }
+
+  return [];
 };
 
 export const getApiErrorMessage = (error: unknown, fallback = 'Request failed'): string => {
@@ -195,8 +245,8 @@ export const updateCompanyProfile = async (
 };
 
 export const fetchCompanyJobs = async (): Promise<CompanyJob[]> => {
-  const response = await api.get<CompanyJob[]>('/api/company/jobs/');
-  return response.data;
+  const response = await api.get<unknown>('/api/company/jobs/');
+  return normalizeArrayPayload<CompanyJob>(response.data);
 };
 
 export const createCompanyJob = async (payload: CompanyJobPayload): Promise<CompanyJob> => {
@@ -223,5 +273,31 @@ export const toggleCompanyJobStatus = async (id: number): Promise<CompanyJob> =>
 
 export const fetchCompanyDashboardStats = async (): Promise<CompanyDashboardStats> => {
   const response = await api.get<CompanyDashboardStats>('/api/company/dashboard/stats/');
+  return response.data;
+};
+
+export const fetchCompanyApplications = async (): Promise<CompanyApplication[]> => {
+  const response = await api.get<unknown>('/api/company/applications/');
+  return normalizeArrayPayload<CompanyApplication>(response.data);
+};
+
+export const reviewCompanyApplication = async (
+  applicationId: number,
+  payload: CompanyApplicationReviewPayload,
+): Promise<CompanyApplication> => {
+  const body: Record<string, string> = {};
+
+  if (payload.status) {
+    body.status = payload.status;
+  }
+
+  if (payload.notes !== undefined) {
+    body.resume_analysis = payload.notes;
+  }
+
+  const response = await api.patch<CompanyApplication>(
+    `/api/company/applications/${applicationId}/review/`,
+    body,
+  );
   return response.data;
 };

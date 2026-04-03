@@ -32,6 +32,45 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const AUTH_USER_STORAGE_KEY = 'authUser';
+
+const normalizeAccountType = (value: unknown): 'company' | 'candidate' | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.includes('company') || normalized.includes('employer') || normalized.includes('recruiter')) {
+    return 'company';
+  }
+
+  if (normalized.includes('candidate') || normalized.includes('jobseeker') || normalized.includes('job_seeker') || normalized.includes('job-seeker')) {
+    return 'candidate';
+  }
+
+  return null;
+};
+
+const parseJwtPayload = (token: string): Record<string, unknown> | null => {
+  const segments = token.split('.');
+  if (segments.length < 2) {
+    return null;
+  }
+
+  try {
+    const base64 = segments[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const decoded = atob(padded);
+    return JSON.parse(decoded) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+};
+
 const getStoredAuthToken = (): string | null => {
   return (
     localStorage.getItem('authToken') ||
@@ -46,7 +85,33 @@ const getStoredUserType = (): 'company' | 'candidate' | null => {
     localStorage.getItem('userRole') ||
     localStorage.getItem('selectedAccountRole');
 
-  return value === 'company' || value === 'candidate' ? value : null;
+  return normalizeAccountType(value);
+};
+
+const getStoredAuthUser = (): User | null => {
+  const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<User>;
+    const account_type = normalizeAccountType(parsed.account_type);
+    if (!account_type) {
+      return null;
+    }
+
+    return {
+      id: typeof parsed.id === 'number' ? parsed.id : 1,
+      email: typeof parsed.email === 'string' ? parsed.email : '',
+      account_type,
+      first_name: typeof parsed.first_name === 'string' ? parsed.first_name : undefined,
+      last_name: typeof parsed.last_name === 'string' ? parsed.last_name : undefined,
+      company_name: typeof parsed.company_name === 'string' ? parsed.company_name : undefined,
+    };
+  } catch {
+    return null;
+  }
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -56,16 +121,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Check for existing authentication on app load
     const token = getStoredAuthToken();
-    const userType = getStoredUserType();
+    const storedUser = getStoredAuthUser();
 
-    if (token && userType) {
-      // In a real app, you might want to validate the token with the backend
-      // For now, we'll assume it's valid and set a basic user object
-      setUser({
-        id: 1, // This should come from the token or a separate API call
-        email: '', // This should come from the token or a separate API call
-        account_type: userType as 'company' | 'candidate',
-      });
+    if (token) {
+      const payload = parseJwtPayload(token);
+      const payloadRole = normalizeAccountType(
+        payload?.account_type ?? payload?.role ?? payload?.user_type,
+      );
+      const storedRole = getStoredUserType();
+      const accountType = payloadRole || storedRole || storedUser?.account_type;
+
+      if (accountType) {
+        const restoredUser: User = {
+          id:
+            typeof payload?.user_id === 'number'
+              ? payload.user_id
+              : typeof payload?.id === 'number'
+                ? payload.id
+                : typeof storedUser?.id === 'number'
+                  ? storedUser.id
+                  : 1,
+          email:
+            typeof payload?.email === 'string'
+              ? payload.email
+              : typeof storedUser?.email === 'string'
+                ? storedUser.email
+                : '',
+          account_type: accountType,
+          first_name: storedUser?.first_name,
+          last_name: storedUser?.last_name,
+          company_name: storedUser?.company_name,
+        };
+
+        setUser(restoredUser);
+        localStorage.setItem('userType', restoredUser.account_type);
+        localStorage.setItem('userRole', restoredUser.account_type);
+        localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(restoredUser));
+      }
     }
 
     setLoading(false);
@@ -75,6 +167,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(userData);
     localStorage.setItem('userType', userData.account_type);
     localStorage.setItem('userRole', userData.account_type);
+    localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(userData));
   };
 
   const logout = () => {
@@ -86,6 +179,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('userType');
     localStorage.removeItem('userRole');
     localStorage.removeItem('rememberEmail');
+    localStorage.removeItem('selectedAccountRole');
+    localStorage.removeItem(AUTH_USER_STORAGE_KEY);
     setUser(null);
   };
 

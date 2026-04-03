@@ -1,12 +1,24 @@
 from django.db import OperationalError
+from django.utils.decorators import method_decorator
 from rest_framework import status, viewsets
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+
+try:
+    from django_ratelimit.decorators import ratelimit
+except Exception:  # pragma: no cover - safety fallback if package missing
+    def ratelimit(*args, **kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
 from company.models import CompanyProfile
 from .models import Profile
+from .throttles import LoginRateThrottle
 from .serializers import (
     CandidateRegisterSerializer,
     CandidateTokenObtainPairSerializer,
@@ -17,7 +29,7 @@ from .serializers import (
     ProfileUpdateSerializer,
     UserRegisterSerializer,
 )
-from .services import RoleValidationService, UserValidationService
+
 
 
 # ============================================================================
@@ -64,6 +76,14 @@ class CandidateLoginView(TokenObtainPairView):
     """
     serializer_class = CandidateTokenObtainPairSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+
+CandidateLoginView = method_decorator(
+    ratelimit(key="ip", rate="10/m", method="POST", block=True),
+    name="dispatch",
+)(CandidateLoginView)
+
 
 class CompanyLoginView(TokenObtainPairView):
     """
@@ -71,6 +91,13 @@ class CompanyLoginView(TokenObtainPairView):
     """
     serializer_class = CompanyTokenObtainPairSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+
+CompanyLoginView = method_decorator(
+    ratelimit(key="ip", rate="10/m", method="POST", block=True),
+    name="dispatch",
+)(CompanyLoginView)
 
 
 
@@ -158,6 +185,13 @@ class EmailOrUsernameTokenObtainPairView(TokenObtainPairView):
     /api/login/ (kept for backward compatibility)
     """
     serializer_class = EmailOrUsernameTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
+
+
+EmailOrUsernameTokenObtainPairView = method_decorator(
+    ratelimit(key="ip", rate="10/m", method="POST", block=True),
+    name="dispatch",
+)(EmailOrUsernameTokenObtainPairView)
 
 
 class RegisterView(APIView):

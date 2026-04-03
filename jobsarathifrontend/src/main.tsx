@@ -1,13 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './index.css';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import Landing from './pages/landing';
-import CompanyDashboard from './pages/CompanyDashboard';
-import CandidateDashboard from './pages/CandidateDashboard';
-import Profile from './components/candidate/Profile';
+import CandidateDashboard from './components/candidate/Dashboard';
+import CompanyDashboard from './components/company/Dashboard';
+import CandidateProfile from './components/candidate/Profile';
+import CompanyProfile from './components/company/Profile';
 import ChooseAccountType from './account/choose/choose_account_type';
 import CandidateLogin from './account/candidate/login';
 import CandidateRegister from './account/candidate/register';
@@ -16,17 +18,20 @@ import CompanyRegister from './account/company/register';
 
 const PrivateRoute = ({ children, allowedRole }: { children: React.ReactNode, allowedRole?: 'company' | 'candidate' }) => {
   const { isAuthenticated, user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" />;
+    const loginPath = allowedRole ? `/account/${allowedRole}/login` : '/account/choose?mode=login';
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
   if (allowedRole && user?.account_type !== allowedRole) {
-    return <Navigate to="/" />;
+    const dashboardPath = user?.account_type === 'company' ? '/company/dashboard' : '/candidate/dashboard';
+    return <Navigate to={dashboardPath} replace />;
   }
 
   return <>{children}</>;
@@ -67,14 +72,23 @@ const App = () => {
             </PrivateRoute>
           } 
         />
-        
-        <Route 
-          path="/profile" 
+
+        <Route
+          path="/candidate/profile"
           element={
-            <PrivateRoute>
-              <Profile />
+            <PrivateRoute allowedRole="candidate">
+              <CandidateProfile />
             </PrivateRoute>
-          } 
+          }
+        />
+
+        <Route
+          path="/company/profile"
+          element={
+            <PrivateRoute allowedRole="company">
+              <CompanyProfile />
+            </PrivateRoute>
+          }
         />
 
         {/* Catch all redirect to landing */}
@@ -92,7 +106,9 @@ if (!rootEl) {
 createRoot(rootEl).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </AuthProvider>
   </StrictMode>
 );

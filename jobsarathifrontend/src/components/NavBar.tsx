@@ -120,7 +120,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
 
           {isLoggedIn ? (
              <Link
-               to="/profile"
+               to="/candidate/profile"
                className="flex items-center gap-2 px-4 py-2 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
              >
                <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">

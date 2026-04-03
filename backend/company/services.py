@@ -208,9 +208,22 @@ class JobSearchService:
         Raises:
             ValueError: If parameters are invalid
         """
+        # Normalize pagination inputs from query params (usually strings).
+        try:
+            page = int(page)
+        except (TypeError, ValueError):
+            page = 1
+
+        try:
+            page_size = int(page_size)
+        except (TypeError, ValueError):
+            page_size = 10
+
         # Validate inputs
         if page_size > 100:
             page_size = 100
+        if page_size < 1:
+            page_size = 10
         if page < 1:
             page = 1
         

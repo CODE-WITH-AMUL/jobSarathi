@@ -1,7 +1,7 @@
-"""
-Role-Based Access Control (RBAC) implementation.
-Provides custom permission classes and mixins for DRF ViewSets.
-"""
+'''
+Its The Role based access control (RBAC) module for the JobSarathi backend.
+'''
+
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework import status

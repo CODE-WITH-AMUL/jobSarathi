@@ -1,6 +1,6 @@
 // components/CompanyLogin.tsx
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, Building2, LogIn, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../../components/NavBar';
 import api from '../../api/apiClient';
@@ -66,13 +66,12 @@ const CompanyLogin: React.FC = () => {
 
     try {
       const response = await api.post('/api/auth/company/login/', {
-        username: formData.email, // Backend accepts username field
+        username: formData.email,
         password: formData.password,
       });
       
       console.log('Company login successful:', response.data);
       
-      // Save tokens
       localStorage.setItem('access_token', response.data.access);
       localStorage.setItem('refresh_token', response.data.refresh);
       localStorage.setItem('accessToken', response.data.access);
@@ -81,7 +80,6 @@ const CompanyLogin: React.FC = () => {
       localStorage.setItem('userType', 'company');
       localStorage.setItem('userRole', response.data.role || 'company');
 
-      // Update in-memory auth context so protected routes work immediately.
       login({
         id: typeof response.data?.user?.id === 'number' ? response.data.user.id : 1,
         email: formData.email,
@@ -93,7 +91,6 @@ const CompanyLogin: React.FC = () => {
         localStorage.setItem('rememberEmail', formData.email);
       }
       
-      // Redirect to company dashboard
       navigate('/company/dashboard', { replace: true });
     } catch (error: any) {
       console.error('Company Login Error:', error);
@@ -112,17 +109,6 @@ const CompanyLogin: React.FC = () => {
       
       <div className="flex items-center justify-center py-12 px-4 sm:px-6">
         <div className="w-full max-w-[400px]">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <Building2 className="w-12 h-12 text-indigo-600" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Company Login
-            </h1>
-            <p className="text-gray-600">Welcome back to JobSarathi</p>
-          </div>
-
           {/* Login Card */}
           <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-6 sm:p-8 border border-white/20">
             {/* API Error Message */}

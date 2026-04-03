@@ -7,9 +7,11 @@ from AdminPanal.views import PublicWebsiteSettingsView
 from company.views import CompanyJobCreateView, CompanyJobDeleteView, CompanyJobUpdateView
 from user.views import CandidateJobApplyView, JobCatalogViewSet
 
+admin_base_path = getattr(settings, "ADMIN_URL", "admin/")
+
 urlpatterns = [
-    path('admin/settings/', include('AdminPanal.urls')),
-    path('admin/', admin.site.urls),
+    path(f"{admin_base_path}settings/", include('AdminPanal.urls')),
+    path(admin_base_path, admin.site.urls),
     path('api/website-settings/', PublicWebsiteSettingsView.as_view(), name='public-website-settings'),
     path('api/jobs/', JobCatalogViewSet.as_view({'get': 'list'}), name='job-catalog-list'),
     path('api/jobs/<int:pk>/', JobCatalogViewSet.as_view({'get': 'retrieve'}), name='job-catalog-detail'),

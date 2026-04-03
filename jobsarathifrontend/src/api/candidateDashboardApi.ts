@@ -145,7 +145,7 @@ const normalizeProfile = (payload: unknown): CandidateProfileData => {
     throw new Error('Invalid profile response.');
   }
 
-  return payload as CandidateProfileData;
+  return payload as unknown as CandidateProfileData;
 };
 
 const normalizeJobList = (payload: unknown): CandidateJobListResponse => {

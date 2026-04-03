@@ -106,6 +106,10 @@ class CompanyJobApplicationSerializer(serializers.ModelSerializer):
     job_title = serializers.CharField(source="job.job_title", read_only=True)
     applied_date = serializers.DateTimeField(source="created_at", read_only=True)
     resume_url = serializers.SerializerMethodField()
+    candidate_resume_url = serializers.SerializerMethodField()
+    candidate_skills = serializers.SerializerMethodField()
+    candidate_headline = serializers.CharField(source="candidate.taglines", read_only=True)
+    candidate_summary = serializers.CharField(source="candidate.description", read_only=True)
 
     class Meta:
         model = JobApplication
@@ -124,6 +128,10 @@ class CompanyJobApplicationSerializer(serializers.ModelSerializer):
             "cover_letter",
             "resume_file",
             "resume_url",
+            "candidate_resume_url",
+            "candidate_skills",
+            "candidate_headline",
+            "candidate_summary",
             "applied_date",
             "resume_match_score",
             "resume_analysis",
@@ -145,6 +153,10 @@ class CompanyJobApplicationSerializer(serializers.ModelSerializer):
             "phone",
             "location",
             "resume_url",
+            "candidate_resume_url",
+            "candidate_skills",
+            "candidate_headline",
+            "candidate_summary",
             "applied_date",
         ]
 
@@ -163,14 +175,38 @@ class CompanyJobApplicationSerializer(serializers.ModelSerializer):
             return obj.resume_file.url
         return None
 
+    def get_candidate_resume_url(self, obj):
+        candidate_resume = getattr(obj.candidate, "resume", None)
+        if not candidate_resume:
+            return None
+
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(candidate_resume.url)
+        return candidate_resume.url
+
+    def get_candidate_skills(self, obj):
+        skills_qs = obj.candidate.skills.values_list("skill", flat=True)
+        return [skill for skill in skills_qs if skill]
+
 
 class CompanyApplicationReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobApplication
-        fields = ["status"]
+        fields = ["status", "resume_analysis"]
+        extra_kwargs = {
+            "status": {"required": False},
+            "resume_analysis": {"required": False, "allow_blank": True},
+        }
 
     def validate_status(self, value):
         allowed = {"under_review", "shortlisted", "selected", "rejected"}
         if value not in allowed:
             raise serializers.ValidationError("Invalid review status.")
         return value
+
+    def validate_resume_analysis(self, value):
+        text = (value or "").strip()
+        if len(text) > 3000:
+            raise serializers.ValidationError("Notes must be 3000 characters or fewer.")
+        return text

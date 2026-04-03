@@ -31,8 +31,14 @@ coverage/
 __pycache__/
 db.sqlite3
 .env
+.env.*
+!.env.example
 .React.env
 django*.gitignore
+*.sqlite3
+media/
+staticfiles/
+*.log
 
 # ------------------ Virtual Environments ------------------ #
 venv/

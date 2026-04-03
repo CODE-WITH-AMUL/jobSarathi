@@ -35,6 +35,16 @@ DEGREE_CHOICES = [
     ('Other', 'Other'),
 ]
 
+
+APPLICATION_STATUS_CHOICES = [
+    ('applied', _('Applied')),
+    ('under_review', _('Under review')),
+    ('shortlisted', _('Shortlisted')),
+    ('rejected', _('Rejected')),
+    ('selected', _('Selected')),
+    ('withdrawn', _('Withdrawn')),
+]
+
 #-----------------[TIME STAMP MODEL]------------------#
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -190,15 +200,6 @@ class Experience(TimeStampedModel):
     def __str__(self):
         return f"{self.position} at {self.company}"
 
-#-----------------[JOB APPLICATION STATUS CHOICES]------------------#
-APPLICATION_STATUS_CHOICES = [
-    ('applied', _('Applied')),
-    ('under_review', _('Under review')),
-    ('shortlisted', _('Shortlisted')),
-    ('rejected', _('Rejected')),
-    ('selected', _('Selected')),
-    ('withdrawn', _('Withdrawn')),
-]
 
 
 #-----------------[JOB APPLICATION MODEL]------------------#
